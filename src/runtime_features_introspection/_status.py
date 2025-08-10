@@ -10,7 +10,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass
-from typing import Literal, TypeAlias
+from typing import TypeAlias
 
 
 # emulating a rust-style enum, where members can have different structures
@@ -47,6 +47,6 @@ class Unknown:
 
 
 # sorted from most to least accurate (privative prefixes come last in cases of equal accuracy)
-Status: TypeAlias = Literal[
-    Active, Inactive, Enabled, Disabled, Available, Unavailable, Unknown
-]
+Status: TypeAlias = (
+    Active | Inactive | Enabled | Disabled | Available | Unavailable | Unknown
+)
