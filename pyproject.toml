@@ -1,0 +1,120 @@
+[project]
+name = "runtime-features-introspection"
+version = "0.1.0"
+description = "A small Python library to seamlessly introspect interpreter features at runtime"
+readme = "README.md"
+authors = [
+    { name = "Clément Robert" }
+]
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Development Status :: 2 - Pre-Alpha",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Free Threading :: 3 - Stable",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[dependency-groups]
+test = [
+    "pytest>=8.4.0",
+]
+covcheck = [
+    {include-group = "test"},
+    "coverage[toml]>=6.5.0 ; python_version == '3.10'",
+    "coverage>=6.5.0 ; python_version >= '3.11'",
+]
+typecheck = [
+    "basedpyright>=1.26.0",
+    "mypy>=1.11.2",
+    "pyright>=1.1.390",
+]
+
+[tool.ruff.lint]
+ignore = ["E501"]
+select = [
+    "E",
+    "F",
+    "W",
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "YTT", # flake8-2020
+    "I",   # isort
+    "UP",  # pyupgrade
+    "RUF022" # unsorted-dunder-all
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["runtime_features_introspection"]
+
+[tool.coverage.run]
+branch = true
+source = [
+    "src/runtime_features_introspection",
+    "tests",
+]
+omit = [
+    "scripts/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    # a more strict default pragma
+    "\\# pragma: no cover\\b",
+
+    # allow defensive code
+    "^\\s*raise NotImplementedError\\b",
+
+    ": \\.\\.\\.(\\s*#.*)?$",
+    "^ +\\.\\.\\.$",
+    "-> ['\"]?NoReturn['\"]?:",
+]
+
+[tool.pyright]
+reportImplicitStringConcatenation = false
+
+# allow defensive code
+reportUnreachable = false
+reportUnnecessaryIsInstance = false
+reportUnnecessaryComparison = false
+
+# in some instances, pyright and basedpyright may conflict over a single line,
+# where e.g. pyright reports an error that I wish to ignore, but basedpyright
+# complains about an unused `# pyright: ignore[...]` comment
+# At the time of writing, it appears that this setting can be lifted once
+# Python 3.10 is unsupported
+reportUnnecessaryTypeIgnoreComment = false
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+show_error_codes = true
+show_error_context = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+filterwarnings = [
+    "error",
+]
