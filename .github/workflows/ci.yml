@@ -81,7 +81,7 @@ jobs:
       if: ${{ startswith( matrix.os, 'ubuntu' ) }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: inifix_coverage_data-${{ matrix.os }}-${{ matrix.python-version }}-gil=${{ matrix.python-gil }}-jit=${{ matrix.python-jit }}
+        name: runtime-features-introspection_coverage_data-${{ matrix.os }}-${{ matrix.python-version }}-gil=${{ matrix.python-gil }}-jit=${{ matrix.python-jit }}
         path: .coverage.*
         if-no-files-found: ignore
         include-hidden-files: true
@@ -104,7 +104,7 @@ jobs:
 
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
       with:
-        pattern: inifix_coverage_data-*
+        pattern: runtime-features-introspection_coverage_data-*
         merge-multiple: true
 
     - name: Check coverage
@@ -116,7 +116,7 @@ jobs:
     - name: Upload HTML report if check failed.
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: inifix_coverage_report
+        name: runtime-features-introspection_coverage_report
         path: htmlcov
       if: ${{ failure() }}
 
@@ -145,10 +145,8 @@ jobs:
         cache-suffix: typecheck
 
     - run: uv sync --frozen --group typecheck
-    - name: Typecheck source code (inifix-cli)
+    - name: Typecheck source cod
       run: ${{ matrix.typechecker }} src
-    - name: Typecheck source code (inifix)
-      run: ${{ matrix.typechecker }} lib/inifix/src typechecks
     - name: Verify Types (pyright only)
       if: ${{ startsWith( matrix.typechecker , 'pyright' ) }}
-      run: ${{ matrix.typechecker }} --verifytypes inifix
+      run: ${{ matrix.typechecker }} --verifytypes runtime-features-introspection

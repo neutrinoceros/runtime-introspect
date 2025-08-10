@@ -22,7 +22,7 @@ jobs:
         cache-suffix: build
     - name: Build distributions
       shell: bash -l {0}
-      run: uv build --package inifix
+      run: uv build
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: artifacts
@@ -49,7 +49,7 @@ jobs:
     - name: test source distribution in isolation
       run: |
         tar xzf dist/*.tar.gz
-        cd inifix-*
+        cd runtime-features-introspection-*
         uv pip install .
         uv run --no-project pytest --color=yes -ra
 
