@@ -1,7 +1,9 @@
-__all__ = ["Feature", "CPythonFeatureSet"]
+__all__ = ["CPythonFeatureSet", "Feature"]
 from dataclasses import dataclass
-from runtime_features_introspection._status import *
 from typing import Literal
+
+from runtime_features_introspection._status import *
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Feature:

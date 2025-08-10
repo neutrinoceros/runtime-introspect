@@ -1,9 +1,16 @@
 __all__ = [
-    "Enabled", "Disabled", "Active", "Inactive", "Available", "Unavailable", "Unknown", "Status",
+    "Active",
+    "Available",
+    "Disabled",
+    "Enabled",
+    "Inactive",
+    "Status",
+    "Unavailable",
+    "Unknown",
 ]
 
-from typing import TypeAlias, Literal
 from dataclasses import dataclass
+from typing import Literal, TypeAlias
 
 
 # emulating a rust-style enum, where members can have different structures
