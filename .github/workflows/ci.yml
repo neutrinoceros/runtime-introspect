@@ -40,15 +40,15 @@ jobs:
           python-version: 3.13t
           python-gil: '1'
           python-jit: '1'
-        - os: ubuntu-latest
+        - os: macos-latest
           python-version: 3.14t
           python-gil: '1'
           python-jit: '0'
-        - os: ubuntu-latest
+        - os: macos-latest
           python-version: 3.14t
           python-gil: '0'
           python-jit: '1'
-        - os: ubuntu-latest
+        - os: macos-latest
           python-version: 3.14t
           python-gil: '1'
           python-jit: '1'
