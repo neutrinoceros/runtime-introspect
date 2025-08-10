@@ -38,7 +38,7 @@ class Feature:
                 msg = f"{stat_str}, {st.detail}"
             case Disabled() | Unavailable() | Unknown() as st:
                 msg = f"{stat_str} ({st.reason})"
-            case _ as unreachable:
+            case _ as unreachable:  # pragma: no cover
                 assert_never(unreachable)
         return f"{self.name}: {msg}"
 
@@ -63,7 +63,9 @@ class CPythonFeatureSet:
             )
         else:
             assert sys.version_info >= (3, 13)
-            if (Py_GIL_DISABLED := sysconfig.get_config_var("Py_GIL_DISABLED")) is None:
+            if (
+                Py_GIL_DISABLED := sysconfig.get_config_var("Py_GIL_DISABLED")
+            ) is None:  # pragma: no cover
                 free_threading = Unknown(
                     reason="failed to introspect build configuration"
                 )
@@ -73,7 +75,7 @@ class CPythonFeatureSet:
                         free_threading = Disabled(
                             reason="global locking is forced by envvar PYTHON_GIL=1"
                         )
-                    else:
+                    else:  # pragma: no cover
                         free_threading = Disabled(
                             reason=(
                                 "most likely, one or more extension(s)"
@@ -108,10 +110,6 @@ class CPythonFeatureSet:
                 if not sys._jit.is_available():
                     jit = Unavailable(
                         reason="this interpreter was built without JIT compilation support"
-                    )
-                elif isinstance(free_threading, Enabled):
-                    jit = Disabled(
-                        reason="JIT cannot be enabled when free-threading is"
                     )
                 else:
                     jit = Disabled(reason="reason is unknown")
