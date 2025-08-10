@@ -3,7 +3,15 @@ import sys
 import pytest
 
 from runtime_features_introspection._features import CPythonFeatureSet, Feature
-from runtime_features_introspection._status import Available
+from runtime_features_introspection._status import (
+    Active,
+    Available,
+    Disabled,
+    Enabled,
+    Inactive,
+    Unavailable,
+    Unknown,
+)
 
 
 def test_feature_repr():
@@ -11,9 +19,35 @@ def test_feature_repr():
     assert repr(ft) == "Feature(name='test', status=Available())"
 
 
-def test_feature_diagnostic():
-    ft = Feature(name="test", status=Available())
-    assert ft.diagnostic == "test: available"
+@pytest.mark.parametrize(
+    "status, expected_str",
+    [
+        pytest.param(Available(), "available", id="available"),
+        pytest.param(
+            Unavailable(reason="don't have it"),
+            "unavailable (don't have it)",
+            id="unavailable",
+        ),
+        pytest.param(Active(), "active", id="active"),
+        pytest.param(Inactive(), "inactive", id="inactive"),
+        pytest.param(
+            Unknown(reason="no idea why"), "unknown (no idea why)", id="unknown"
+        ),
+        pytest.param(
+            Enabled(detail="and too late to stop it now"),
+            "enabled, and too late to stop it now",
+            id="enabled",
+        ),
+        pytest.param(
+            Disabled(reason="this one is grounded"),
+            "disabled (this one is grounded)",
+            id="disabled",
+        ),
+    ],
+)
+def test_feature_diagnostic(status, expected_str):
+    ft = Feature(name="test", status=status)
+    assert ft.diagnostic == f"test: {expected_str}"
 
 
 def test_feature_immutability():
