@@ -30,28 +30,28 @@ jobs:
         include:
         - os: ubuntu-latest
           python-version: 3.13t
-          python-gil: 1
-          python-jit: 0
+          python-gil: '1'
+          python-jit: '0'
         - os: ubuntu-latest
           python-version: 3.13t
-          python-gil: 0
-          python-jit: 1
+          python-gil: '0'
+          python-jit: '1'
         - os: ubuntu-latest
           python-version: 3.13t
-          python-gil: 1
-          python-jit: 1
+          python-gil: '1'
+          python-jit: '1'
         - os: ubuntu-latest
           python-version: 3.14t
-          python-gil: 1
-          python-jit: 0
+          python-gil: '1'
+          python-jit: '0'
         - os: ubuntu-latest
           python-version: 3.14t
-          python-gil: 0
-          python-jit: 1
+          python-gil: '0'
+          python-jit: '1'
         - os: ubuntu-latest
           python-version: 3.14t
-          python-gil: 1
-          python-jit: 1
+          python-gil: '1'
+          python-jit: '1'
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
