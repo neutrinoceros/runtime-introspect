@@ -3,7 +3,7 @@ import os
 import sys
 import sysconfig
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from runtime_features_introspection._status import (
     Active,
@@ -63,14 +63,16 @@ class CPythonFeatureSet:
             )
         else:
             assert sys.version_info >= (3, 13)
-            if (
-                Py_GIL_DISABLED := sysconfig.get_config_var("Py_GIL_DISABLED")
-            ) is None:  # pragma: no cover
+            Py_GIL_DISABLED = cast(
+                Literal[0, 1, None],
+                sysconfig.get_config_var("Py_GIL_DISABLED"),
+            )
+            if Py_GIL_DISABLED is None:  # pragma: no cover
                 free_threading = Unknown(
                     reason="failed to introspect build configuration"
                 )
             elif Py_GIL_DISABLED == 1:
-                if sys._is_gil_enabled():
+                if sys._is_gil_enabled(): # pyright: ignore[reportPrivateUsage]
                     if PYTHON_GIL == "1":
                         free_threading = Disabled(
                             reason="global locking is forced by envvar PYTHON_GIL=1"
@@ -101,13 +103,14 @@ class CPythonFeatureSet:
             jit = Unknown(reason="no introspection API known for Python 3.13")
         else:
             assert sys.version_info >= (3, 14)
-            if sys._jit.is_enabled():
+            sys_jit = sys._jit  # pyright: ignore[reportPrivateUsage]
+            if sys_jit.is_enabled():
                 if jit_introspection == "deep":
-                    jit = Active() if sys._jit.is_active() else Inactive()
+                    jit = Active() if sys_jit.is_active() else Inactive()
                 else:
                     jit = Available()
             else:
-                if not sys._jit.is_available():
+                if not sys_jit.is_available():
                     jit = Unavailable(
                         reason="this interpreter was built without JIT compilation support"
                     )
