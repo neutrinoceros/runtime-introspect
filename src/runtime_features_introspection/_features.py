@@ -1,8 +1,16 @@
 __all__ = ["CPythonFeatureSet", "Feature"]
+import os
+import sys
+import sysconfig
 from dataclasses import dataclass
 from typing import Literal
 
 from runtime_features_introspection._status import *
+
+if sys.version_info >= (3, 11):
+    from typing import assert_never
+else:
+    from typing_extensions import assert_never
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
