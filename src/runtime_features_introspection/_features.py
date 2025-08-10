@@ -5,7 +5,16 @@ import sysconfig
 from dataclasses import dataclass
 from typing import Literal
 
-from runtime_features_introspection._status import *
+from runtime_features_introspection._status import (
+    Active,
+    Available,
+    Disabled,
+    Enabled,
+    Inactive,
+    Status,
+    Unavailable,
+    Unknown,
+)
 
 if sys.version_info >= (3, 11):
     from typing import assert_never
