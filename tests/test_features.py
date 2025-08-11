@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 import sys
@@ -139,6 +140,12 @@ class TestCPythonFeatureSet:
             env["PYTHON_JIT"] = JIT
         if GIL == "0" and sysconfig.get_config_var("Py_GIL_DISABLED") != "1":
             pytest.skip(reason="can't disable the GIL on this build")
+
+        if (COVERAGE_PROCESS_START := os.getenv("COVERAGE_PROCESS_START")) is not None:
+            env["COVERAGE_PROCESS_START"] = COVERAGE_PROCESS_START
+        else:  # pragma: no cover
+            pass
+
         cp = subprocess.run(
             [sys.executable, str(script_file.resolve())],
             env=env,
