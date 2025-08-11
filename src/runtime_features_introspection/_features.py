@@ -85,8 +85,8 @@ class CPythonFeatureSet:
                     else:  # pragma: no cover
                         free_threading = Disabled(
                             reason=(
-                                "most likely, one or more extension(s)"
-                                "already loaded did not declare compatibility"
+                                "most likely, one or more already loaded "
+                                "extension(s) did not declare compatibility"
                             )
                         )
                 else:
