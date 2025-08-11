@@ -32,10 +32,13 @@ class Feature:
         stat_str: str = self.status.__class__.__name__.lower()
         msg: str
         match self.status:
-            case Active() | Inactive() | Available() as st:
+            case Available() | Active() | Inactive():
                 msg = stat_str
             case Enabled() as st:
-                msg = f"{stat_str}, {st.detail}"
+                if st.detail is not None:
+                    msg = f"{stat_str}, {st.detail}"
+                else:
+                    msg = stat_str
             case Disabled() | Unavailable() | Unknown() as st:
                 msg = f"{stat_str} ({st.reason})"
             case _ as unreachable:  # pragma: no cover
@@ -112,8 +115,10 @@ class CPythonFeatureSet:
             if sys_jit.is_enabled():
                 if jit_introspection == "deep":
                     jit = Active() if sys_jit.is_active() else Inactive()
-                else:
-                    jit = Available()
+                elif PYTHON_JIT not in ("0", None):
+                    jit = Enabled(detail=f"by envvar {PYTHON_JIT=!s}")
+                else:  # pragma: no cover
+                    jit = Enabled(detail=None)
             else:
                 if not sys_jit.is_available():
                     jit = Unavailable(
