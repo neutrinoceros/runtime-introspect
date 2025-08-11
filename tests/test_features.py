@@ -1,3 +1,4 @@
+import re
 import sys
 
 import pytest
@@ -70,16 +71,17 @@ not_cpython = pytest.mark.skipif(
 )
 
 
-class TestCPythonFeatureSet:
-    @not_cpython
-    def test_featureset_init(self):
-        with pytest.raises(
-            TypeError,
-            match="^CPythonFeatureSet can only be instantiated from a CPython interpreter$",
-        ):
-            CPythonFeatureSet()
+@not_cpython
+def test_featureset_init():
+    with pytest.raises(
+        TypeError,
+        match="^CPythonFeatureSet can only be instantiated from a CPython interpreter$",
+    ):
+        CPythonFeatureSet()
 
-    @cpython_only
+
+@cpython_only
+class TestCPythonFeatureSet:
     def test_featureset_immutability(self):
         fs = CPythonFeatureSet()
         with pytest.raises(TypeError):
@@ -87,10 +89,25 @@ class TestCPythonFeatureSet:
             # not that helpful, as of CPython 3.13.6
             fs.unknown_attr = 123
 
-    @cpython_only
-    def test_featureset_snapshot(self):
+    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
+    def test_featureset_snapshot(self, jit_introspection):
         fs = CPythonFeatureSet()
-        ss = fs.snapshot()
-        assert isinstance(ss, frozenset)
+        ss = fs.snapshot(jit_introspection=jit_introspection)
         assert len(ss) == 2
-        assert {ft.name for ft in ss} == {"free-threading", "JIT compilation"}
+        assert tuple(ss.keys()) == ("free-threading", "JIT")
+
+    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
+    def test_featureset_diagnostics(self, jit_introspection):
+        fs = CPythonFeatureSet()
+        di = fs.diagnostics(jit_introspection=jit_introspection)
+        assert len(di) == 2
+
+        possible_values = [r"((un)?available)", r"(disabled)"]
+        extra_possibilities: list[str] = []
+        if sys.version_info < (3, 14):
+            extra_possibilities.append(r"(unknown)")
+        else:
+            if jit_introspection == "deep":
+                extra_possibilities.append(r"((in)?active)")
+        expected_jit = re.compile(r"|".join(possible_values + extra_possibilities))
+        assert expected_jit.search(di[1]) is not None
