@@ -5,7 +5,7 @@ import sysconfig
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from runtime_features_introspection._status import (
+from runtime_introspect._status import (
     Active,
     Available,
     Disabled,

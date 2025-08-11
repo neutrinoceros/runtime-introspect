@@ -1,5 +1,5 @@
 [project]
-name = "runtime-features-introspection"
+name = "runtime-introspect"
 version = "0.1.0"
 description = "A small Python library to seamlessly introspect interpreter features at runtime"
 readme = "README.md"
@@ -35,6 +35,9 @@ dependencies = [
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
+[tool.flit.sdist]
+include = ["tests/"]
+
 [dependency-groups]
 test = [
     "pytest>=8.4.0",
@@ -65,12 +68,12 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["runtime_features_introspection"]
+known-first-party = ["runtime_introspect"]
 
 [tool.coverage.run]
 branch = true
 source = [
-    "src/runtime_features_introspection",
+    "src/runtime_introspect",
     "tests",
 ]
 omit = [
