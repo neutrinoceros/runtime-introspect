@@ -7,8 +7,8 @@ from textwrap import dedent
 
 import pytest
 
-from runtime_features_introspection._features import CPythonFeatureSet, Feature
-from runtime_features_introspection._status import (
+from runtime_introspect._features import CPythonFeatureSet, Feature
+from runtime_introspect._status import (
     Active,
     Available,
     Disabled,
@@ -125,7 +125,7 @@ class TestCPythonFeatureSet:
         script_file.write_text(
             dedent(f"""
             from pprint import pprint
-            from runtime_features_introspection._features import CPythonFeatureSet
+            from runtime_introspect._features import CPythonFeatureSet
 
             fs = CPythonFeatureSet()
             ss = fs.snapshot(jit_introspection={jit_introspection!r})
