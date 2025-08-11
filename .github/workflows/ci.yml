@@ -11,6 +11,7 @@ on:
 
 jobs:
   unit-tests:
+    name: Test ${{ matrix.python-version }} ${{ matrix.prelude }}
     strategy:
       matrix:
         os:
@@ -25,33 +26,28 @@ jobs:
         - 3.14t
         - pypy3.10
         - pypy3.11
-        python-gil: [null]
-        python-jit: [null]
+        # *conditionally* setting an env var is not supported in GitHub action.
+        # Let's improvise
+        prelude: ['']
         include:
         - os: ubuntu-latest
-          python-version: 3.13t
-          python-gil: '1'
-          python-jit: '0'
+          python-version: '3.14'
+          prelude: PYTHON_GIL=1 PYTHON_JIT=0
         - os: ubuntu-latest
-          python-version: 3.13t
-          python-gil: '0'
-          python-jit: '1'
-        - os: ubuntu-latest
-          python-version: 3.13t
-          python-gil: '1'
-          python-jit: '1'
+          python-version: '3.14'
+          prelude: PYTHON_GIL=1 PYTHON_JIT=1
         - os: ubuntu-latest
           python-version: 3.14t
-          python-gil: '1'
-          python-jit: '0'
+          prelude: PYTHON_GIL=1 PYTHON_JIT=0
+        - os: ubuntu-latest
+          # this setup isn't actually supported yet, but because free-threaded builds
+          # don't support JIT-enabling at all, PYTHON_JIT=1 is silently ignored
+          # by the interpreter
+          python-version: 3.14t
+          prelude: PYTHON_GIL=0 PYTHON_JIT=1
         - os: ubuntu-latest
           python-version: 3.14t
-          python-gil: '0'
-          python-jit: '1'
-        - os: ubuntu-latest
-          python-version: 3.14t
-          python-gil: '1'
-          python-jit: '1'
+          prelude: PYTHON_GIL=1 PYTHON_JIT=1
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -67,11 +63,8 @@ jobs:
     - name: Run tests (with coverage)
       if: ${{ startswith( matrix.os, 'ubuntu' ) }}
       run: |
-        uv run --group covcheck \
-          coverage run --parallel-mode -m pytest --color=yes
-      env:
-        PYTHON_GIL: ${{ matrix.python-gil }}
-        PYTHON_JIT: ${{ matrix.python-jit }}
+        ${{ matrix.prelude }} uv run --group covcheck \
+        coverage run --parallel-mode -m pytest --color=yes
 
     - name: Upload coverage data
       # only using reports from ubuntu because
@@ -79,7 +72,7 @@ jobs:
       if: ${{ startswith( matrix.os, 'ubuntu' ) }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: runtime-features-introspection_coverage_data-${{ matrix.os }}-${{ matrix.python-version }}-gil=${{ matrix.python-gil }}-jit=${{ matrix.python-jit }}
+        name: runtime-features-introspection_coverage_data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.prelude }}
         path: .coverage.*
         if-no-files-found: ignore
         include-hidden-files: true

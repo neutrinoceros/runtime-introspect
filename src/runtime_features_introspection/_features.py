@@ -54,9 +54,14 @@ class CPythonFeatureSet:
     @staticmethod
     def snapshot(
         *, jit_introspection: Literal["stable", "deep"] = "stable"
-    ) -> frozenset[Feature]:
-        free_threading: Status
+    ) -> dict[str, Status]:
+        # it is safe to read these env vars early, because they only affect the
+        # interpreter when set ahead of startup, so mutating them at runtime
+        # won't have any effect.
         PYTHON_GIL = os.getenv("PYTHON_GIL")
+        PYTHON_JIT = os.getenv("PYTHON_JIT")
+
+        free_threading: Status
         if sys.version_info < (3, 13):
             free_threading = Unavailable(
                 reason="free-threading only exists in Python 3.13 and newer"
@@ -72,7 +77,7 @@ class CPythonFeatureSet:
                     reason="failed to introspect build configuration"
                 )
             elif Py_GIL_DISABLED == 1:
-                if sys._is_gil_enabled(): # pyright: ignore[reportPrivateUsage]
+                if sys._is_gil_enabled():  # pyright: ignore[reportPrivateUsage]
                     if PYTHON_GIL == "1":
                         free_threading = Disabled(
                             reason="global locking is forced by envvar PYTHON_GIL=1"
@@ -115,22 +120,20 @@ class CPythonFeatureSet:
                         reason="this interpreter was built without JIT compilation support"
                     )
                 else:
-                    jit = Disabled(reason="reason is unknown")
+                    if PYTHON_JIT == "0":
+                        jit = Disabled(reason="forced by envvar PYTHON_JIT=0")
+                    elif PYTHON_JIT is None:
+                        jit = Disabled(reason="envvar PYTHON_JIT is unset")
+                    else:  # pragma: no cover
+                        jit = Disabled(reason="reason is unknown")
 
-        return frozenset(
-            {
-                Feature(name="free-threading", status=free_threading),
-                Feature(name="JIT compilation", status=jit),
-            }
-        )
+        return {"free-threading": free_threading, "JIT": jit}
 
     def diagnostics(
         self, *, jit_introspection: Literal["stable", "deep"] = "stable"
     ) -> list[str]:
+        ss = self.snapshot(jit_introspection=jit_introspection)
+        features = [Feature(name=k, status=v) for k, v in ss.items()]
         return [
-            ft.diagnostic
-            for ft in sorted(
-                self.snapshot(jit_introspection=jit_introspection),
-                key=lambda ft: ft.name.lower(),
-            )
+            ft.diagnostic for ft in sorted(features, key=lambda ft: ft.name.lower())
         ]
