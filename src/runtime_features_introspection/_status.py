@@ -16,7 +16,7 @@ from typing import TypeAlias
 # emulating a rust-style enum, where members can have different structures
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Enabled:
-    detail: str
+    detail: str | None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

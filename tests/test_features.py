@@ -1,5 +1,9 @@
 import re
+import subprocess
 import sys
+import sysconfig
+from itertools import product
+from textwrap import dedent
 
 import pytest
 
@@ -34,10 +38,11 @@ def test_feature_repr():
         pytest.param(
             Unknown(reason="no idea why"), "unknown (no idea why)", id="unknown"
         ),
+        pytest.param(Enabled(detail=None), "enabled", id="enabled-wo-detail"),
         pytest.param(
             Enabled(detail="and too late to stop it now"),
             "enabled, and too late to stop it now",
-            id="enabled",
+            id="enabled-w-detail",
         ),
         pytest.param(
             Disabled(reason="this one is grounded"),
@@ -80,6 +85,18 @@ def test_featureset_init():
         CPythonFeatureSet()
 
 
+ENV_VALUES = [None, "0", "1"]
+GIL_JIT_ENV_VALUES = list(product(ENV_VALUES, ENV_VALUES))
+
+
+@pytest.fixture(
+    params=GIL_JIT_ENV_VALUES,
+    ids=lambda GIL_JIT_tuple: f"GIL={GIL_JIT_tuple[0]}-JIT={GIL_JIT_tuple[1]}",
+)
+def envvar_setup(request):
+    return request.param
+
+
 @cpython_only
 class TestCPythonFeatureSet:
     def test_featureset_immutability(self):
@@ -96,13 +113,78 @@ class TestCPythonFeatureSet:
         assert len(ss) == 2
         assert tuple(ss.keys()) == ("free-threading", "JIT")
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 13), reason="envvars are only recognized on Python 3.13+"
+    )
+    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
+    def test_featureset_snapshot_w_envvars(
+        self, tmp_path, envvar_setup, jit_introspection
+    ):
+        GIL, JIT = envvar_setup
+        script_file = tmp_path / "test_script.py"
+        script_file.write_text(
+            dedent(f"""
+            from pprint import pprint
+            from runtime_features_introspection._features import CPythonFeatureSet
+
+            fs = CPythonFeatureSet()
+            ss = fs.snapshot(jit_introspection={jit_introspection!r})
+            pprint(ss)
+            """)
+        )
+        env: dict[str, str] = {}
+        if GIL is not None:
+            env["PYTHON_GIL"] = GIL
+        if JIT is not None:
+            env["PYTHON_JIT"] = JIT
+        if GIL == "0" and sysconfig.get_config_var("Py_GIL_DISABLED") != "1":
+            pytest.skip(reason="can't disable the GIL on this build")
+        cp = subprocess.run(
+            [sys.executable, str(script_file.resolve())],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+        # recreate the snapshot in the parent process...
+        # this works because dataclasses' reprs allow for roundtrips, but
+        # it's maybe a bit fragile still
+        res = eval(cp.stdout.decode())
+        if sysconfig.get_config_var("Py_GIL_DISABLED"):
+            if GIL == "1":
+                possible_ff_types = (Disabled,)
+            else:
+                assert GIL is None
+                possible_ff_types = (Available, Enabled, Disabled)
+        else:
+            possible_ff_types = (Unavailable,)
+
+        assert isinstance(res["free-threading"], possible_ff_types)
+
+        if sys.version_info[:2] == (3, 13):
+            possible_jit_types = (Unknown,)
+        elif sys._jit.is_available():
+            if jit_introspection == "deep":
+                possible_jit_types = (Active, Inactive, Disabled)
+            elif jit_introspection == "stable":
+                if JIT == "1":
+                    possible_jit_types = (Enabled,)
+                else:
+                    assert JIT in ("0", None)
+                    possible_jit_types = (Disabled,)
+            else:  # pragma: no cover
+                raise RuntimeError
+        else:
+            possible_jit_types = (Unavailable,)
+
+        assert isinstance(res["JIT"], possible_jit_types)
+
     @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
     def test_featureset_diagnostics(self, jit_introspection):
         fs = CPythonFeatureSet()
         di = fs.diagnostics(jit_introspection=jit_introspection)
         assert len(di) == 2
 
-        possible_values = [r"((un)?available)", r"(disabled)"]
+        possible_values = [r"((un)?available)", r"((en|dis)abled)"]
         extra_possibilities: list[str] = []
         if sys.version_info < (3, 14):
             extra_possibilities.append(r"(unknown)")
