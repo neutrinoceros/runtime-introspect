@@ -15,7 +15,7 @@ class Feature:
 
     @property
     def diagnostic(self) -> str:
-        return f"{self.name}: {self.status}"
+        return f"{self.name}: {self.status.summary}"
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
