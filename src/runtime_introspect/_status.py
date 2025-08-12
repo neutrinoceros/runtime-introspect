@@ -30,7 +30,7 @@ class Status:
       - (True, True, bool) : (in)active
 
     They are obtained following these 2 rules:
-      - the only valid value to the left of a True is another True
+      - the only valid value to the left of a bool is True
       - the only valid value to the right of a None is another None
 
     or, in logical terms:
