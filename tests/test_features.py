@@ -129,7 +129,7 @@ class TestCPythonFeatureSet:
 
         ft = res[0]
         assert ft.name == "free-threading"
-        assert ft.status.summary in possible_ff_status
+        assert ft.status.label in possible_ff_status
 
         if sys.version_info[:2] == (3, 13):
             possible_jit_status = {"undetermined"}
@@ -149,7 +149,7 @@ class TestCPythonFeatureSet:
 
         ft = res[1]
         assert ft.name == "JIT"
-        assert ft.status.summary in possible_jit_status
+        assert ft.status.label in possible_jit_status
 
     @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
     def test_featureset_diagnostics(self, jit_introspection):

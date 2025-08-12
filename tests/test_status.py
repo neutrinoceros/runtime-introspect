@@ -6,21 +6,46 @@ import pytest
 from runtime_introspect._status import Status
 
 
-@pytest.mark.parametrize(
-    "available, enabled, active, expected_summary",
-    [
-        pytest.param(None, None, None, "undetermined", id="undetermined"),
-        pytest.param(False, None, None, "unavailable", id="unavailable"),
-        pytest.param(True, None, None, "available", id="available"),
-        pytest.param(True, False, None, "disabled", id="disabled"),
-        pytest.param(True, True, None, "enabled", id="enabled"),
-        pytest.param(True, True, False, "inactive", id="inactive"),
-        pytest.param(True, True, True, "active", id="active"),
+@pytest.fixture(
+    params=[
+        (None, None, None, "undetermined"),
+        (False, None, None, "unavailable"),
+        (True, None, None, "available"),
+        (True, False, None, "disabled"),
+        (True, True, None, "enabled"),
+        (True, True, False, "inactive"),
+        (True, True, True, "active"),
     ],
+    ids=lambda quadruple: quadruple[3],
 )
-def test_status_summary(available, enabled, active, expected_summary):
+def status_quadruple(request):
+    return request.param
+
+
+def test_label(status_quadruple):
+    available, enabled, active, expected_label = status_quadruple
     st = Status(available=available, enabled=enabled, active=active)
-    assert st.summary == expected_summary
+    assert st.label == expected_label
+    assert st.details is None
+    assert st.summary == expected_label
+
+
+def test_logical_consistency(status_quadruple):
+    available, enabled, active, _summary = status_quadruple
+
+    # check that this combination forms a valid instance
+    Status(available=available, enabled=enabled, active=active)
+
+    # check for logical consistency
+    if active is not None:
+        assert enabled
+    if enabled is not None:
+        assert available
+
+    if available is None:
+        assert enabled is None
+    if enabled is None:
+        assert active is None
 
 
 @pytest.mark.parametrize(

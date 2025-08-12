@@ -286,9 +286,6 @@ wheels = [
 name = "runtime-introspect"
 version = "0.1.0"
 source = { editable = "." }
-dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
-]
 
 [package.dev-dependencies]
 covcheck = [
@@ -306,7 +303,6 @@ typecheck = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "typing-extensions", marker = "python_full_version < '3.12'", specifier = ">=4.5.0" }]
 
 [package.metadata.requires-dev]
 covcheck = [
