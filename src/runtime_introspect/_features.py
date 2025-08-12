@@ -26,8 +26,7 @@ class CPythonFeatureSet:
                 "CPythonFeatureSet can only be instantiated from a CPython interpreter"
             )
 
-    @staticmethod
-    def _get_free_threading_feature() -> Feature:
+    def free_threading(self) -> Feature:
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="free-threading", status=st)
 
@@ -71,8 +70,12 @@ class CPythonFeatureSet:
         st = replace(st, details=details)
         return replace(ft, status=st)
 
-    @staticmethod
-    def _get_jit_feature(deep_introspection: bool) -> Feature:
+    def jit(self, *, introspection: Literal["stable", "deep"] = "stable") -> Feature:
+        if introspection not in ("stable", "deep"):
+            raise ValueError(
+                f"Invalid argument {introspection=!r}. "
+                "Expected either 'stable' or 'deep'"
+            )
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="JIT", status=st)
 
@@ -112,7 +115,7 @@ class CPythonFeatureSet:
             return replace(ft, status=st)
 
         st = replace(st, enabled=True)
-        if deep_introspection:
+        if introspection == "deep":
             st = replace(st, active=sys_jit.is_active())
             return replace(ft, status=st)
 
@@ -127,8 +130,8 @@ class CPythonFeatureSet:
         self, *, jit_introspection: Literal["stable", "deep"] = "stable"
     ) -> list[Feature]:
         return [
-            self._get_free_threading_feature(),
-            self._get_jit_feature(deep_introspection=jit_introspection == "deep"),
+            self.free_threading(),
+            self.jit(introspection=jit_introspection),
         ]
 
     def diagnostics(

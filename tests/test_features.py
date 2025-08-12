@@ -166,3 +166,19 @@ class TestCPythonFeatureSet:
                 extra_possibilities.append(r"((in)?active)")
         expected_jit = re.compile(r"|".join(possible_status + extra_possibilities))
         assert expected_jit.search(di[1]) is not None
+
+    def test_invalid_jit_introspection(self):
+        fs = CPythonFeatureSet()
+        introspection = "invalid"
+        expected_msg = (
+            rf"^Invalid argument {introspection=!r}\. "
+            r"Expected either 'stable' or 'deep'$"
+        )
+        with pytest.raises(ValueError, match=expected_msg):
+            fs.jit(introspection=introspection)
+
+        with pytest.raises(ValueError, match=expected_msg):
+            fs.snapshot(jit_introspection=introspection)
+
+        with pytest.raises(ValueError, match=expected_msg):
+            fs.diagnostics(jit_introspection=introspection)
