@@ -44,8 +44,8 @@ test = [
 ]
 covcheck = [
     {include-group = "test"},
-    "coverage[toml]>=6.5.0 ; python_version == '3.10'",
-    "coverage>=6.5.0 ; python_version >= '3.11'",
+    "coverage[toml]>=7.10.0 ; python_version == '3.10'",
+    "coverage>=7.10.0 ; python_version >= '3.11'",
 ]
 typecheck = [
     "basedpyright>=1.26.0",
@@ -72,6 +72,11 @@ known-first-party = ["runtime_introspect"]
 
 [tool.coverage.run]
 branch = true
+patch = [
+    # this patch implies `parallel-mode=1`, which means `coverage report` and friends
+    # *must* be precedeed by `coverage combine`
+    "subprocess",
+]
 source = [
     "src/runtime_introspect",
     "tests",
