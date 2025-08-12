@@ -23,7 +23,7 @@ class Status:
     A complete status is represented as an ordered triplet (available, enabled, active),
     all of which can only be either True, False, or None (representing an unknown
     or undetermined state). However, only 7 of the 27 possible combinations are
-    valid status, listed here from least to most specific, with corresponding names
+    valid status, listed here from least to most specific, with corresponding labels
       - (None, None, None) : undetermined
       - (bool, None, None) : (un)available
       - (True, bool, None) : (dis|en)abled
