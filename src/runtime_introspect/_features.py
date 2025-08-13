@@ -3,7 +3,7 @@ import os
 import sys
 import sysconfig
 from dataclasses import dataclass, replace
-from typing import Literal, TypeAlias, cast, Final
+from typing import Final, Literal, TypeAlias, cast
 
 from runtime_introspect._status import Status
 
@@ -19,7 +19,11 @@ class Feature:
 
 
 Introspection: TypeAlias = Literal["stable", "unstable-inspect-activity"]
-VALID_INTROSPECTIONS: Final[list[Introspection]] = ["stable", "unstable-inspect-activity"]
+VALID_INTROSPECTIONS: Final[list[Introspection]] = [
+    "stable",
+    "unstable-inspect-activity",
+]
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CPythonFeatureSet:
@@ -94,9 +98,9 @@ class CPythonFeatureSet:
             return replace(ft, status=st)
 
         assert sys.version_info >= (3, 14)
-        sys_jit = sys._jit  # pyright: ignore[reportPrivateUsage]
+        sys_jit = sys._jit  # pyright: ignore
 
-        if not sys_jit.is_available():
+        if not sys_jit.is_available():  # pyright: ignore
             st = replace(
                 st,
                 available=False,
@@ -106,7 +110,7 @@ class CPythonFeatureSet:
 
         st = replace(st, available=True)
         PYTHON_JIT = os.getenv("PYTHON_JIT")
-        if not sys_jit.is_enabled():
+        if not sys_jit.is_enabled():  # pyright: ignore
             details: str | None
             if PYTHON_JIT == "0":
                 details = "forced by envvar PYTHON_JIT=0"
@@ -119,7 +123,8 @@ class CPythonFeatureSet:
 
         st = replace(st, enabled=True)
         if introspection == "unstable-inspect-activity":
-            st = replace(st, active=sys_jit.is_active())
+            jit_is_active: bool = sys_jit.is_active()  # pyright: ignore
+            st = replace(st, active=jit_is_active)
             return replace(ft, status=st)
 
         if PYTHON_JIT not in ("0", None):
