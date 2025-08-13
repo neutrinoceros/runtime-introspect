@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import pytest
 
-from runtime_introspect._features import CPythonFeatureSet, Feature
+from runtime_introspect._features import CPythonFeatureSet, Feature, VALID_INTROSPECTIONS
 from runtime_introspect._status import Status
 
 
@@ -70,19 +70,17 @@ class TestCPythonFeatureSet:
             # not that helpful, as of CPython 3.13.6
             fs.unknown_attr = 123
 
-    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
-    def test_featureset_snapshot(self, jit_introspection):
+    @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
+    def test_featureset_snapshot(self, introspection):
         fs = CPythonFeatureSet()
-        features = fs.snapshot(jit_introspection=jit_introspection)
+        features = fs.snapshot(introspection=introspection)
         assert [ft.name for ft in features] == ["free-threading", "JIT"]
 
     @pytest.mark.skipif(
         sys.version_info < (3, 13), reason="envvars are only recognized on Python 3.13+"
     )
-    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
-    def test_featureset_snapshot_w_envvars(
-        self, tmp_path, envvar_setup, jit_introspection
-    ):
+    @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
+    def test_featureset_snapshot_w_envvars(self, tmp_path, envvar_setup, introspection):
         GIL, JIT = envvar_setup
         script_file = tmp_path / "test_script.py"
         script_file.write_text(
@@ -91,7 +89,7 @@ class TestCPythonFeatureSet:
             from runtime_introspect._features import CPythonFeatureSet
 
             fs = CPythonFeatureSet()
-            ss = fs.snapshot(jit_introspection={jit_introspection!r})
+            ss = fs.snapshot(introspection={introspection!r})
             pprint(ss)
             """)
         )
@@ -134,9 +132,9 @@ class TestCPythonFeatureSet:
         if sys.version_info[:2] == (3, 13):
             possible_jit_status = {"undetermined"}
         elif sys._jit.is_available():
-            if jit_introspection == "deep":
+            if introspection == "unstable-inspect-activity":
                 possible_jit_status = {"active", "inactive", "disabled"}
-            elif jit_introspection == "stable":
+            elif introspection == "stable":
                 if JIT == "1":
                     possible_jit_status = {"enabled"}
                 else:
@@ -151,10 +149,10 @@ class TestCPythonFeatureSet:
         assert ft.name == "JIT"
         assert ft.status.label in possible_jit_status
 
-    @pytest.mark.parametrize("jit_introspection", ["stable", "deep"])
-    def test_featureset_diagnostics(self, jit_introspection):
+    @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
+    def test_featureset_diagnostics(self, introspection):
         fs = CPythonFeatureSet()
-        di = fs.diagnostics(jit_introspection=jit_introspection)
+        di = fs.diagnostics(introspection=introspection)
         assert len(di) == 2
 
         possible_status = [r"((un)?available)", r"((en|dis)abled)"]
@@ -162,23 +160,21 @@ class TestCPythonFeatureSet:
         if sys.version_info < (3, 14):
             extra_possibilities.append(r"(undetermined)")
         else:
-            if jit_introspection == "deep":
+            if introspection == "unstable-inspect-activity":
                 extra_possibilities.append(r"((in)?active)")
         expected_jit = re.compile(r"|".join(possible_status + extra_possibilities))
         assert expected_jit.search(di[1]) is not None
 
-    def test_invalid_jit_introspection(self):
+    @pytest.mark.parametrize("method_name", ["jit", "snapshot", "diagnostics"])
+    def test_invalid_introspection(self, method_name):
         fs = CPythonFeatureSet()
         introspection = "invalid"
-        expected_msg = (
-            rf"^Invalid argument {introspection=!r}\. "
-            r"Expected either 'stable' or 'deep'$"
-        )
-        with pytest.raises(ValueError, match=expected_msg):
-            fs.jit(introspection=introspection)
-
-        with pytest.raises(ValueError, match=expected_msg):
-            fs.snapshot(jit_introspection=introspection)
-
-        with pytest.raises(ValueError, match=expected_msg):
-            fs.diagnostics(jit_introspection=introspection)
+        method = getattr(fs, method_name)
+        with pytest.raises(
+            ValueError,
+            match=(
+                rf"^Invalid argument {introspection=!r}\. "
+                fr"Expected one of {re.escape(str(VALID_INTROSPECTIONS))}$"
+            ),
+        ):
+            method(introspection=introspection)
