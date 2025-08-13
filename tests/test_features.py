@@ -8,8 +8,14 @@ from textwrap import dedent
 
 import pytest
 
-from runtime_introspect._features import CPythonFeatureSet, Feature, VALID_INTROSPECTIONS
+from runtime_introspect._features import (
+    VALID_INTROSPECTIONS,
+    CPythonFeatureSet,
+    Feature,
+)
 from runtime_introspect._status import Status
+
+from .helpers import cpython_only, not_cpython
 
 
 def test_feature_repr():
@@ -30,14 +36,6 @@ def test_feature_immutability():
         # not using an exact match because the error message from slots=True is actually
         # not that helpful, as of CPython 3.13.6
         ft.unknown_attr = 123
-
-
-cpython_only = pytest.mark.skipif(
-    sys.implementation.name != "cpython", reason="intended as CPython-only"
-)
-not_cpython = pytest.mark.skipif(
-    sys.implementation.name == "cpython", reason="behavior differs on CPython"
-)
 
 
 @not_cpython
@@ -174,7 +172,7 @@ class TestCPythonFeatureSet:
             ValueError,
             match=(
                 rf"^Invalid argument {introspection=!r}\. "
-                fr"Expected one of {re.escape(str(VALID_INTROSPECTIONS))}$"
+                rf"Expected one of {re.escape(str(VALID_INTROSPECTIONS))}$"
             ),
         ):
             method(introspection=introspection)
