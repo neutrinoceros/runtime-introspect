@@ -3,7 +3,7 @@ import os
 import sys
 import sysconfig
 from dataclasses import dataclass, replace
-from typing import Literal, cast
+from typing import Literal, TypeAlias, cast, Final
 
 from runtime_introspect._status import Status
 
@@ -17,6 +17,9 @@ class Feature:
     def diagnostic(self) -> str:
         return f"{self.name}: {self.status.summary}"
 
+
+Introspection: TypeAlias = Literal["stable", "unstable-inspect-activity"]
+VALID_INTROSPECTIONS: Final[list[Introspection]] = ["stable", "unstable-inspect-activity"]
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CPythonFeatureSet:
@@ -70,11 +73,11 @@ class CPythonFeatureSet:
         st = replace(st, details=details)
         return replace(ft, status=st)
 
-    def jit(self, *, introspection: Literal["stable", "deep"] = "stable") -> Feature:
-        if introspection not in ("stable", "deep"):
+    def jit(self, *, introspection: Introspection = "stable") -> Feature:
+        if introspection not in ("stable", "unstable-inspect-activity"):
             raise ValueError(
                 f"Invalid argument {introspection=!r}. "
-                "Expected either 'stable' or 'deep'"
+                f"Expected one of {VALID_INTROSPECTIONS}"
             )
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="JIT", status=st)
@@ -115,7 +118,7 @@ class CPythonFeatureSet:
             return replace(ft, status=st)
 
         st = replace(st, enabled=True)
-        if introspection == "deep":
+        if introspection == "unstable-inspect-activity":
             st = replace(st, active=sys_jit.is_active())
             return replace(ft, status=st)
 
@@ -126,17 +129,11 @@ class CPythonFeatureSet:
 
         return replace(ft, status=st)
 
-    def snapshot(
-        self, *, jit_introspection: Literal["stable", "deep"] = "stable"
-    ) -> list[Feature]:
+    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:
         return [
             self.free_threading(),
-            self.jit(introspection=jit_introspection),
+            self.jit(introspection=introspection),
         ]
 
-    def diagnostics(
-        self, *, jit_introspection: Literal["stable", "deep"] = "stable"
-    ) -> list[str]:
-        return [
-            ft.diagnostic for ft in self.snapshot(jit_introspection=jit_introspection)
-        ]
+    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:
+        return [ft.diagnostic for ft in self.snapshot(introspection=introspection)]
