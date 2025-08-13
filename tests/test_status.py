@@ -1,5 +1,5 @@
 import re
-from itertools import chain, permutations
+from itertools import chain, product
 
 import pytest
 
@@ -63,7 +63,7 @@ def test_logical_consistency(status_quadruple):
                 id=f"{available}-{enabled}-{active}",
             )
             for available in (False, None)
-            for enabled, active in permutations((True, False, None), 2)
+            for enabled, active in product((True, False, None), (True, False, None))
             if (enabled, active) != (None, None)
         ],
         [
