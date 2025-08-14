@@ -59,7 +59,9 @@ class CPythonFeatureSet:
         st = replace(st, available=True)
         PYTHON_GIL = os.getenv("PYTHON_GIL")
         if sys._is_gil_enabled():  # pyright: ignore[reportPrivateUsage]
-            if PYTHON_GIL == "1":
+            if sys._xoptions.get("gil") == "1":  # pyright: ignore[reportPrivateUsage]
+                details = "global locking is forced by command line option -Xgil=1"
+            elif PYTHON_GIL == "1":
                 details = "global locking is forced by envvar PYTHON_GIL=1"
             else:  # pragma: no cover
                 details = (
@@ -70,7 +72,9 @@ class CPythonFeatureSet:
             return replace(ft, status=st)
 
         st = replace(st, enabled=True)
-        if PYTHON_GIL == "0":
+        if sys._xoptions.get("gil") == "0":  # pyright: ignore[reportPrivateUsage]
+            details = "forced by command line option -Xgil=0"
+        elif PYTHON_GIL == "0":
             details = "forced by envvar PYTHON_GIL=0"
         else:
             details = "no forcing detected"

@@ -3,8 +3,10 @@ import re
 import subprocess
 import sys
 import sysconfig
+from dataclasses import dataclass
 from itertools import product
 from textwrap import dedent
+from typing import Literal, TypeAlias
 
 import pytest
 
@@ -47,15 +49,35 @@ def test_featureset_init():
         CPythonFeatureSet()
 
 
-ENV_status = [None, "0", "1"]
-GIL_JIT_ENV_status = list(product(ENV_status, ENV_status))
+ENV_VAL = ["0", "1", None]
+EnvSwitch: TypeAlias = Literal["0", "1", None]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Environment:
+    GIL: EnvSwitch
+    JIT: EnvSwitch
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Settings:
+    environment: Environment
+    xoptions: list[str]
+
+
+ENVIRONMENTS = [Environment(GIL=GIL, JIT=JIT) for GIL, JIT in product(ENV_VAL, ENV_VAL)]
+SETTINGS = [
+    Settings(environment=env, xoptions=([f"gil={GIL}"] if GIL is not None else []))
+    for env in ENVIRONMENTS
+    for GIL in ENV_VAL
+]
 
 
 @pytest.fixture(
-    params=GIL_JIT_ENV_status,
-    ids=lambda GIL_JIT_tuple: f"GIL={GIL_JIT_tuple[0]}-JIT={GIL_JIT_tuple[1]}",
+    params=SETTINGS,
+    ids=lambda s: f"GIL={s.environment.GIL}-JIT={s.environment.JIT}-X={s.xoptions}",
 )
-def envvar_setup(request):
+def settings(request):
     return request.param
 
 
@@ -75,11 +97,27 @@ class TestCPythonFeatureSet:
         assert [ft.name for ft in features] == ["free-threading", "JIT"]
 
     @pytest.mark.skipif(
-        sys.version_info < (3, 13), reason="envvars are only recognized on Python 3.13+"
+        sys.version_info < (3, 13),
+        reason="startup options under test are only recognized on Python 3.13+",
     )
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
-    def test_featureset_snapshot_w_envvars(self, tmp_path, envvar_setup, introspection):
-        GIL, JIT = envvar_setup
+    def test_featureset_snapshot_w_startup_optionns(
+        self, tmp_path, settings, introspection
+    ):
+        env = settings.environment
+
+        is_gil_forced_disabled = "gil=0" in settings.xoptions or (
+            "gil=1" not in settings.xoptions and env.GIL == "0"
+        )
+        is_gil_forced_enabled = "gil=1" in settings.xoptions or (
+            "gil=0" not in settings.xoptions and env.GIL == "1"
+        )
+
+        if sysconfig.get_config_var("Py_GIL_DISABLED") != 1 and (
+            is_gil_forced_disabled or "gil=1" in settings.xoptions
+        ):
+            pytest.skip(reason="invalid GIL settings + build combo")
+
         script_file = tmp_path / "test_script.py"
         script_file.write_text(
             dedent(f"""
@@ -91,22 +129,22 @@ class TestCPythonFeatureSet:
             pprint(ss)
             """)
         )
-        env: dict[str, str] = {}
-        if GIL is not None:
-            env["PYTHON_GIL"] = GIL
-        if JIT is not None:
-            env["PYTHON_JIT"] = JIT
-        if GIL == "0" and sysconfig.get_config_var("Py_GIL_DISABLED") != "1":
-            pytest.skip(reason="can't disable the GIL on this build")
+
+        env_dict: dict[str, str] = {}
+        if env.GIL is not None:
+            env_dict["PYTHON_GIL"] = env.GIL
+        if env.JIT is not None:
+            env_dict["PYTHON_JIT"] = env.JIT
 
         if (COVERAGE_PROCESS_START := os.getenv("COVERAGE_PROCESS_START")) is not None:
-            env["COVERAGE_PROCESS_START"] = COVERAGE_PROCESS_START
+            env_dict["COVERAGE_PROCESS_START"] = COVERAGE_PROCESS_START
         else:  # pragma: no cover
             pass
 
+        xoptions = [f"-X{opt}" for opt in settings.xoptions]
         cp = subprocess.run(
-            [sys.executable, str(script_file.resolve())],
-            env=env,
+            [sys.executable, *xoptions, str(script_file.resolve())],
+            env=env_dict,
             check=True,
             capture_output=True,
         )
@@ -114,11 +152,27 @@ class TestCPythonFeatureSet:
         # this works because dataclasses' reprs allow for roundtrips, but
         # it's maybe a bit fragile still
         res = eval(cp.stdout.decode())
+        expected_details: str | None = None
         if sysconfig.get_config_var("Py_GIL_DISABLED"):
-            if GIL == "1":
+            if is_gil_forced_enabled:
                 possible_ff_status = {"disabled"}
+                if "gil=1" in settings.xoptions:
+                    expected_details = (
+                        "global locking is forced by command line option -Xgil=1"
+                    )
+                elif env.GIL == "1":
+                    expected_details = "global locking is forced by envvar PYTHON_GIL=1"
+                else:  # pragma: no cover
+                    raise RuntimeError
+            elif is_gil_forced_disabled:
+                possible_ff_status = {"enabled"}
+                if "gil=0" in settings.xoptions:
+                    expected_details = "forced by command line option -Xgil=0"
+                elif env.GIL == "0":
+                    expected_details = "forced by envvar PYTHON_GIL=0"
+                else:  # pragma: no cover
+                    raise RuntimeError
             else:
-                assert GIL is None
                 possible_ff_status = {"available", "enabled", "disabled"}
         else:
             possible_ff_status = {"unavailable"}
@@ -126,6 +180,8 @@ class TestCPythonFeatureSet:
         ft = res[0]
         assert ft.name == "free-threading"
         assert ft.status.label in possible_ff_status
+        if expected_details is not None:
+            assert ft.status.details == expected_details
 
         if sys.version_info[:2] == (3, 13):
             possible_jit_status = {"undetermined"}
@@ -133,10 +189,10 @@ class TestCPythonFeatureSet:
             if introspection == "unstable-inspect-activity":
                 possible_jit_status = {"active", "inactive", "disabled"}
             elif introspection == "stable":
-                if JIT == "1":
+                if env.JIT == "1":
                     possible_jit_status = {"enabled"}
                 else:
-                    assert JIT in ("0", None)
+                    assert env.JIT in ("0", None)
                     possible_jit_status = {"disabled"}
             else:  # pragma: no cover
                 raise RuntimeError
