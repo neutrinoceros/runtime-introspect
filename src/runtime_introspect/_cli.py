@@ -19,10 +19,8 @@ def main(argv: list[str] | None = None) -> int:
     fs = cls()
 
     parser = ArgumentParser(allow_abbrev=False)
-    # TODO: pass these as kwargs when support for Python 3.13 is dropped
-    # https://docs.python.org/3.14/library/argparse.html#color
+    # TODO: pass this as kwarg when support for Python 3.13 is dropped
     # https://docs.python.org/3.14/library/argparse.html#suggest-on-error
-    parser.color = True  # type: ignore
     parser.suggest_on_error = True  # type: ignore
 
     parser.add_argument(
