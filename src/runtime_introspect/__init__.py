@@ -1,2 +1,2 @@
-__all__ = ["CPythonFeatureSet"]
-from ._features import CPythonFeatureSet
+__all__ = ["CPythonFeatureSet", "Feature"]
+from ._features import CPythonFeatureSet, Feature
