@@ -10,7 +10,7 @@ license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 classifiers = [
     "Intended Audience :: Developers",
-    "Development Status :: 3 - Beta",
+    "Development Status :: 3 - Alpha",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",

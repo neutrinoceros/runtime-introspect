@@ -14,7 +14,7 @@ configuration.
 
 ## Scope and development status
 
-This project is currently in beta, with a flexible scope; Only CPython
+This project is currently in alpha, with a flexible scope; Only CPython
 interpreter features (Free-threading and JIT) are supported at the moment.
 However, the library design leaves open the possibility to add support for other
 Python implementations. If you spot something missing please open a feature
