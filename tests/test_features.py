@@ -219,7 +219,7 @@ class TestCPythonFeatureSet:
         expected_jit = re.compile(r"|".join(possible_status + extra_possibilities))
         assert expected_jit.search(di[1]) is not None
 
-    @pytest.mark.parametrize("method_name", ["jit", "snapshot", "diagnostics"])
+    @pytest.mark.parametrize("method_name", ["_jit", "snapshot", "diagnostics"])
     def test_invalid_introspection(self, method_name):
         fs = CPythonFeatureSet()
         introspection = "invalid"

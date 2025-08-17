@@ -10,11 +10,14 @@ from runtime_introspect._status import Status
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Feature:
+    """Represent the state of a feature at instantiation time."""
+
     name: str
     status: Status
 
     @property
     def diagnostic(self) -> str:
+        """A legible diagnostic."""
         return f"{self.name}: {self.status.summary}"
 
 
@@ -27,13 +30,19 @@ VALID_INTROSPECTIONS: Final[list[Introspection]] = [
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CPythonFeatureSet:
+    """Represents optional CPython features.
+
+    This class can only be instantiated by a CPython interpreter.
+    If a different implementation is detected, will raise a TypeError.
+    """
+
     def __post_init__(self) -> None:
         if sys.implementation.name != "cpython":
             raise TypeError(
                 "CPythonFeatureSet can only be instantiated from a CPython interpreter"
             )
 
-    def free_threading(self) -> Feature:
+    def _free_threading(self) -> Feature:
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="free-threading", status=st)
 
@@ -81,7 +90,7 @@ class CPythonFeatureSet:
         st = replace(st, details=details)
         return replace(ft, status=st)
 
-    def jit(self, *, introspection: Introspection = "stable") -> Feature:
+    def _jit(self, *, introspection: Introspection = "stable") -> Feature:
         if introspection not in ("stable", "unstable-inspect-activity"):
             raise ValueError(
                 f"Invalid argument {introspection=!r}. "
@@ -139,10 +148,37 @@ class CPythonFeatureSet:
         return replace(ft, status=st)
 
     def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:
+        """
+        Create a snapshot of the feature set.
+
+        Returns a list of immutable Feature instances, representing the state
+        of the runtime at the time this method is invoked.
+
+        Parameters
+        ----------
+
+        introspection: 'stable' (default) or 'unstable-inspect-activity'
+          For some features, active and inactive status can only be inspected
+          using APIs that might, as a side effect, alter said status.
+          Use introspection='unstable-inspect-activity' for more accurate
+          reporting if this is acceptable in your application.
+        """
         return [
-            self.free_threading(),
-            self.jit(introspection=introspection),
+            self._free_threading(),
+            self._jit(introspection=introspection),
         ]
 
     def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:
+        """
+        Produce legible diagnostics as a list of strings.
+
+        Parameters
+        ----------
+
+        introspection: 'stable' (default) or 'unstable-inspect-activity'
+          For some features, active and inactive status can only be inspected
+          using APIs that might, as a side effect, alter said status.
+          Use introspection='unstable-inspect-activity' for more accurate
+          reporting if this is acceptable in your application.
+        """
         return [ft.diagnostic for ft in self.snapshot(introspection=introspection)]
