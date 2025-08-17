@@ -47,6 +47,7 @@ showcase the runtime feature set at startup. For instance
 ```py
 # conftest.py
 import sys
+import textwrap
 from runtime_introspect import CPythonFeatureSet
 
 # ...
