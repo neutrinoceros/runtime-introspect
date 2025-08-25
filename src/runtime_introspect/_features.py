@@ -140,10 +140,8 @@ class CPythonFeatureSet:
             st = replace(st, active=jit_is_active)
             return replace(ft, status=st)
 
-        if PYTHON_JIT not in ("0", None):
+        if PYTHON_JIT not in ("0", None):  # pragma: no branch
             st = replace(st, details=f"by envvar {PYTHON_JIT=!s}")
-        else:  # pragma: no cover
-            pass
 
         return replace(ft, status=st)
 

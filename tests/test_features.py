@@ -162,7 +162,7 @@ class TestCPythonFeatureSet:
                     )
                 elif env.GIL == "1":
                     expected_details = "global locking is forced by envvar PYTHON_GIL=1"
-                else:  # pragma: no cover
+                else:
                     raise RuntimeError
             elif is_gil_forced_disabled:
                 possible_ff_status = {"enabled"}
@@ -170,7 +170,7 @@ class TestCPythonFeatureSet:
                     expected_details = "forced by command line option -Xgil=0"
                 elif env.GIL == "0":
                     expected_details = "forced by envvar PYTHON_GIL=0"
-                else:  # pragma: no cover
+                else:
                     raise RuntimeError
             else:
                 possible_ff_status = {"available", "enabled", "disabled"}
@@ -194,7 +194,7 @@ class TestCPythonFeatureSet:
                 else:
                     assert env.JIT in ("0", None)
                     possible_jit_status = {"disabled"}
-            else:  # pragma: no cover
+            else:
                 raise RuntimeError
         else:
             possible_jit_status = {"unavailable"}
