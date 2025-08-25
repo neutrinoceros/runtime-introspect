@@ -136,10 +136,10 @@ class TestCPythonFeatureSet:
         if env.JIT is not None:
             env_dict["PYTHON_JIT"] = env.JIT
 
-        if (COVERAGE_PROCESS_START := os.getenv("COVERAGE_PROCESS_START")) is not None:
+        if (
+            COVERAGE_PROCESS_START := os.getenv("COVERAGE_PROCESS_START")
+        ) is not None:  # pragma: no branch
             env_dict["COVERAGE_PROCESS_START"] = COVERAGE_PROCESS_START
-        else:  # pragma: no cover
-            pass
 
         xoptions = [f"-X{opt}" for opt in settings.xoptions]
         cp = subprocess.run(
