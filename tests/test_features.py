@@ -106,7 +106,7 @@ class TestCPythonFeatureSet:
         reason="startup options under test are only recognized on Python 3.13+",
     )
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
-    def test_featureset_snapshot_w_startup_optionns(
+    def test_featureset_snapshot_w_startup_options(
         self, tmp_path, settings, introspection
     ):
         env = settings.environment
