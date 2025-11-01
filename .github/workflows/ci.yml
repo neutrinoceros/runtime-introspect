@@ -72,7 +72,7 @@ jobs:
       # only using reports from ubuntu because
       # combining reports from multiple platforms is tricky (or impossible ?)
       if: ${{ startswith( matrix.os, 'ubuntu' ) }}
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: runtime-introspect_coverage_data-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.prelude }}
         path: .coverage.*
@@ -95,7 +95,7 @@ jobs:
         cache-suffix: covcheck
     - run: uv sync --group covcheck
 
-    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+    - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         pattern: runtime-introspect_coverage_data-*
         merge-multiple: true
@@ -108,7 +108,7 @@ jobs:
         coverage report --fail-under=100
 
     - name: Upload HTML report if check failed.
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: runtime-introspect_coverage_report
         path: htmlcov
