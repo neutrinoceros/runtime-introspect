@@ -3,7 +3,7 @@ import os
 import sys
 import sysconfig
 from dataclasses import dataclass, replace
-from typing import Final, Literal, TypeAlias, cast
+from typing import Final, Literal, Protocol, TypeAlias, cast
 
 from runtime_introspect._status import Status
 
@@ -26,6 +26,12 @@ VALID_INTROSPECTIONS: Final[list[Introspection]] = [
     "stable",
     "unstable-inspect-activity",
 ]
+
+
+class FeatureSet(Protocol):
+    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]: ...
+    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]: ...
+    def supports(self, feature_name: str, /) -> bool | None: ...
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -145,6 +151,23 @@ class CPythonFeatureSet:
 
         return replace(ft, status=st)
 
+    def _py_limited_api(self) -> Feature:
+        st = Status(available=None, enabled=None, active=None)
+        ft = Feature(name="py-limited-api", status=st)
+
+        if sys.version_info >= (3, 15):
+            return ft
+        elif self._free_threading().status.available:
+            st = replace(
+                st,
+                available=False,
+                details="Python 3.14t and earlier free-threaded builds do not support py-limited-api",
+            )
+            return replace(ft, status=st)
+        else:
+            st = replace(st, available=True)
+            return replace(ft, status=st)
+
     def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:
         """
         Create a snapshot of the feature set.
@@ -164,6 +187,7 @@ class CPythonFeatureSet:
         return [
             self._free_threading(),
             self._jit(introspection=introspection),
+            self._py_limited_api(),
         ]
 
     def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:
@@ -180,3 +204,29 @@ class CPythonFeatureSet:
           reporting if this is acceptable in your application.
         """
         return [ft.diagnostic for ft in self.snapshot(introspection=introspection)]
+
+    def supports(self, feature_name: str, /) -> bool | None:
+        """
+        Assess availability of a specific feature, by name.
+
+        Only returns True or False if support can be determined exactly,
+        None is returned in uncertain cases.
+        """
+        for ft in self.snapshot():
+            if ft.name != feature_name:
+                continue
+            return ft.status.available
+
+        return False
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class DummyFeatureSet:
+    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:  # pyright: ignore[reportUnusedParameter]
+        return []
+
+    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:  # pyright: ignore[reportUnusedParameter]
+        return []
+
+    def supports(self, feature_name: str, /) -> bool | None:  # pyright: ignore[reportUnusedParameter]
+        return False
