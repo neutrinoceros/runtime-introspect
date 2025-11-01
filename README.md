@@ -31,11 +31,12 @@ python -m pip install runtime-introspect
 
 Here's how to produce a
 ```py
->>> from runtime_introspect import CPythonFeatureSet
->>> fs = CPythonFeatureSet()
+>>> from runtime_introspect import runtime_feature_set
+>>> fs = runtime_feature_set()
 >>> print("\n".join(fs.diagnostics()))
 free-threading: unavailable (this interpreter was built without free-threading support)
 JIT: disabled (envvar PYTHON_JIT is unset)
+py-limited-api: available
 ```
 
 
@@ -48,15 +49,15 @@ showcase the runtime feature set at startup. For instance
 # conftest.py
 import sys
 import textwrap
-from runtime_introspect import CPythonFeatureSet
+from runtime_introspect import runtime_feature_set
 
 # ...
 
 def pytest_report_header(config, start_path) -> list[str]:
-    if sys.implementation.name == "cpython":
-        fs = CPythonFeatureSet()
+    fs = runtime_feature_set()
+    if diagnostics := fs.diagnostics():
         return [
-            "CPython optional features state (snapshot):",
+            "Runtime optional features state (snapshot):",
             textwrap.indent("\n".join(fs.diagnostics()), "  "),
         ]
     else:
@@ -67,9 +68,10 @@ example output (truncated)
 ```
 ===================================== test session starts ======================================
 platform darwin -- Python 3.13.6, pytest-8.4.1, pluggy-1.6.0
-CPython optional features state (snapshot):
+Runtime optional features state (snapshot):
   free-threading: unavailable (this interpreter was built without free-threading support)
   JIT: undetermined (no introspection API known for Python 3.13)
+  py-limited-api: available
 ...
 ```
 
@@ -82,17 +84,20 @@ active and how it was invoked
 ```
 ❯ python3.13 -m runtime_introspect
 free-threading: unavailable (this interpreter was built without free-threading support)
-JIT: disabled (envvar PYTHON_JIT is unset)
+JIT: undetermined (no introspection API known for Python 3.13)
+py-limited-api: available
 ```
 ```
-❯ PYTHON_JIT=1 python3.13 -m runtime_introspect
+❯ PYTHON_JIT=1 python3.14 -m runtime_introspect
 free-threading: unavailable (this interpreter was built without free-threading support)
 JIT: enabled (by envvar PYTHON_JIT=1)
+py-limited-api: available
 ```
 ```
 ❯ python3.14t -X gil=0 -m runtime_introspect
 free-threading: enabled (forced by command line option -Xgil=0)
 JIT: unavailable (this interpreter was built without JIT compilation support)
+py-limited-api: unavailable (Python 3.14t and earlier free-threaded builds do not support py-limited-api)
 ```
 
 Run `python -m runtime_introspect --help` to browse additional options.

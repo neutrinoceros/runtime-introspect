@@ -13,6 +13,7 @@ import pytest
 from runtime_introspect._features import (
     VALID_INTROSPECTIONS,
     CPythonFeatureSet,
+    DummyFeatureSet,
     Feature,
 )
 from runtime_introspect._status import Status
@@ -41,7 +42,7 @@ def test_feature_immutability():
 
 
 @not_cpython
-def test_featureset_init():
+def test_foreign_featureset_init():
     with pytest.raises(
         TypeError,
         match="^CPythonFeatureSet can only be instantiated from a CPython interpreter$",
@@ -94,7 +95,11 @@ class TestCPythonFeatureSet:
     def test_featureset_snapshot(self, introspection):
         fs = CPythonFeatureSet()
         features = fs.snapshot(introspection=introspection)
-        assert [ft.name for ft in features] == ["free-threading", "JIT"]
+        assert [ft.name for ft in features] == [
+            "free-threading",
+            "JIT",
+            "py-limited-api",
+        ]
 
     @pytest.mark.skipif(
         sys.version_info < (3, 13),
@@ -207,7 +212,7 @@ class TestCPythonFeatureSet:
     def test_featureset_diagnostics(self, introspection):
         fs = CPythonFeatureSet()
         di = fs.diagnostics(introspection=introspection)
-        assert len(di) == 2
+        assert len(di) == 3
 
         possible_status = [r"((un)?available)", r"((en|dis)abled)"]
         extra_possibilities: list[str] = []
@@ -232,3 +237,13 @@ class TestCPythonFeatureSet:
             ),
         ):
             method(introspection=introspection)
+
+
+class TestDummyFeatureSet:
+    def test_snapshot(self):
+        fs = DummyFeatureSet()
+        assert fs.snapshot() == []
+
+    def test_diagnostics(self):
+        fs = DummyFeatureSet()
+        assert fs.diagnostics() == []
