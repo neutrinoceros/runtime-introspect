@@ -1,4 +1,3 @@
-import os
 import re
 import subprocess
 import sys
@@ -140,11 +139,6 @@ class TestCPythonFeatureSet:
             env_dict["PYTHON_GIL"] = env.GIL
         if env.JIT is not None:
             env_dict["PYTHON_JIT"] = env.JIT
-
-        if (
-            COVERAGE_PROCESS_START := os.getenv("COVERAGE_PROCESS_START")
-        ) is not None:  # pragma: no branch
-            env_dict["COVERAGE_PROCESS_START"] = COVERAGE_PROCESS_START
 
         xoptions = [f"-X{opt}" for opt in settings.xoptions]
         cp = subprocess.run(
