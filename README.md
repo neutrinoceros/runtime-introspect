@@ -29,16 +29,37 @@ python -m pip install runtime-introspect
 
 ## Usage
 
-Here's how to produce a
+### Create diagnostics
+
+Here's how to produce a complete diagnostic
 ```py
->>> from runtime_introspect import runtime_feature_set
->>> fs = runtime_feature_set()
->>> print("\n".join(fs.diagnostics()))
+from runtime_introspect import runtime_feature_set
+
+fs = runtime_feature_set()
+print("\n".join(fs.diagnostics()))
+```
+example output:
+```
 free-threading: unavailable (this interpreter was built without free-threading support)
 JIT: disabled (envvar PYTHON_JIT is unset)
 py-limited-api: available
 ```
 
+### Query a feature for availability
+
+To make code conditional on the availability of a specific feature, use
+`FeatureSet.supports`. For instance
+```py
+from runtime_introspect import runtime_feature_set
+
+fs = runtime_feature_set()
+if fs.supports("free-threading"):
+    ... # cool multi-threading stuff
+else:
+    ... # also cool, but single-threaded stuff
+```
+As of runtime-introspect 0.2.0, supported feature names include
+`'free-threading'`, `'JIT'` and `'py-limited-api'`.
 
 ### As a `pytest` helper
 
