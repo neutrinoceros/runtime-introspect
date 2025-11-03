@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - DOC: fix unused variable in pytest header example application
 - DOC: complete usage examples
+- TYP: add autocompletion support for the `FeatureSet.supports` method
 
 ## [0.2.0] - 2025-11-01
 

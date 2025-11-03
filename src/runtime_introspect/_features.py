@@ -27,11 +27,13 @@ VALID_INTROSPECTIONS: Final[list[Introspection]] = [
     "unstable-inspect-activity",
 ]
 
+FeatureName: TypeAlias = Literal["free-threading", "JIT", "py-limited-api"]
+
 
 class FeatureSet(Protocol):
     def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]: ...
     def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]: ...
-    def supports(self, feature_name: str, /) -> bool | None: ...
+    def supports(self, feature_name: FeatureName, /) -> bool | None: ...
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -205,7 +207,7 @@ class CPythonFeatureSet:
         """
         return [ft.diagnostic for ft in self.snapshot(introspection=introspection)]
 
-    def supports(self, feature_name: str, /) -> bool | None:
+    def supports(self, feature_name: FeatureName, /) -> bool | None:
         """
         Assess availability of a specific feature, by name.
 
@@ -228,5 +230,5 @@ class DummyFeatureSet:
     def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:  # pyright: ignore[reportUnusedParameter]
         return []
 
-    def supports(self, feature_name: str, /) -> bool | None:  # pyright: ignore[reportUnusedParameter]
+    def supports(self, feature_name: FeatureName, /) -> bool | None:  # pyright: ignore[reportUnusedParameter]
         return False
