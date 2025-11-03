@@ -58,7 +58,7 @@ def pytest_report_header(config, start_path) -> list[str]:
     if diagnostics := fs.diagnostics():
         return [
             "Runtime optional features state (snapshot):",
-            textwrap.indent("\n".join(fs.diagnostics()), "  "),
+            textwrap.indent("\n".join(diagnostics), "  "),
         ]
     else:
         return []
