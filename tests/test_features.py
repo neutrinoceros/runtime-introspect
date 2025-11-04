@@ -4,13 +4,14 @@ import subprocess
 import sys
 import sysconfig
 from dataclasses import dataclass
-from itertools import product
+from itertools import chain, combinations, product
 from textwrap import dedent
 from typing import Literal, TypeAlias
 
 import pytest
 
 from runtime_introspect._features import (
+    VALID_FEATURE_NAMES,
     VALID_INTROSPECTIONS,
     CPythonFeatureSet,
     DummyFeatureSet,
@@ -208,11 +209,21 @@ class TestCPythonFeatureSet:
         assert ft.name == "JIT"
         assert ft.status.label in possible_jit_status
 
+    @pytest.mark.parametrize(
+        "features",
+        chain.from_iterable(
+            combinations(VALID_FEATURE_NAMES, n)
+            for n in range(1, len(VALID_FEATURE_NAMES) + 1)
+        ),
+    )
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
-    def test_featureset_diagnostics(self, introspection):
+    def test_featureset_diagnostics(self, features, introspection):
         fs = CPythonFeatureSet()
-        di = fs.diagnostics(introspection=introspection)
-        assert len(di) == 3
+        di = fs.diagnostics(features=features, introspection=introspection)
+        assert len(di) == len(features)
+
+        if "JIT" not in features:
+            return
 
         possible_status = [r"((un)?available)", r"((en|dis)abled)"]
         extra_possibilities: list[str] = []
@@ -222,9 +233,9 @@ class TestCPythonFeatureSet:
             if introspection == "unstable-inspect-activity":
                 extra_possibilities.append(r"((in)?active)")
         expected_jit = re.compile(r"|".join(possible_status + extra_possibilities))
-        assert expected_jit.search(di[1]) is not None
+        assert expected_jit.search(di[features.index("JIT")]) is not None
 
-    @pytest.mark.parametrize("method_name", ["_jit", "snapshot", "diagnostics"])
+    @pytest.mark.parametrize("method_name", ["snapshot", "diagnostics"])
     def test_invalid_introspection(self, method_name):
         fs = CPythonFeatureSet()
         introspection = "invalid"

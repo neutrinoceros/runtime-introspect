@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 __all__ = ["CPythonFeatureSet", "Feature"]
 import os
 import sys
 import sysconfig
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
-from typing import Final, Literal, Protocol, TypeAlias, cast
+from typing import ClassVar, Final, Literal, Protocol, TypeAlias, cast
 
 from runtime_introspect._status import Status
 
@@ -28,29 +31,44 @@ VALID_INTROSPECTIONS: Final[list[Introspection]] = [
 ]
 
 FeatureName: TypeAlias = Literal["free-threading", "JIT", "py-limited-api"]
+VALID_FEATURE_NAMES: Final[list[FeatureName]] = [
+    "free-threading",
+    "JIT",
+    "py-limited-api",
+]
 
 
 class FeatureSet(Protocol):
-    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]: ...
-    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]: ...
-    def supports(self, feature_name: FeatureName, /) -> bool | None: ...
+    def snapshot(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",
+        introspection: Introspection = "stable",
+    ) -> list[Feature]: ...
+    def diagnostics(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",
+        introspection: Introspection = "stable",
+    ) -> list[str]: ...
+    def supports(self, feature: FeatureName, /) -> bool | None: ...
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
-class CPythonFeatureSet:
-    """Represents optional CPython features.
+class FeatureGetter(Protocol):
+    @staticmethod
+    def snapshot(
+        fs: FeatureSet, /, *, introspection: Introspection = "stable"
+    ) -> Feature: ...
 
-    This class can only be instantiated by a CPython interpreter.
-    If a different implementation is detected, will raise a TypeError.
-    """
 
-    def __post_init__(self) -> None:
-        if sys.implementation.name != "cpython":
-            raise TypeError(
-                "CPythonFeatureSet can only be instantiated from a CPython interpreter"
-            )
-
-    def _free_threading(self) -> Feature:
+class CPythonFreeThreading:
+    @staticmethod
+    def snapshot(
+        fs: FeatureSet,  # pyright: ignore[reportUnusedParameter]
+        /,
+        *,
+        introspection: Introspection = "stable",  # pyright: ignore[reportUnusedParameter]
+    ) -> Feature:
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="free-threading", status=st)
 
@@ -98,7 +116,15 @@ class CPythonFeatureSet:
         st = replace(st, details=details)
         return replace(ft, status=st)
 
-    def _jit(self, *, introspection: Introspection = "stable") -> Feature:
+
+class CPythonJIT:
+    @staticmethod
+    def snapshot(
+        fs: FeatureSet,  # pyright: ignore[reportUnusedParameter]
+        /,
+        *,
+        introspection: Introspection = "stable",
+    ) -> Feature:
         if introspection not in ("stable", "unstable-inspect-activity"):
             raise ValueError(
                 f"Invalid argument {introspection=!r}. "
@@ -153,13 +179,23 @@ class CPythonFeatureSet:
 
         return replace(ft, status=st)
 
-    def _py_limited_api(self) -> Feature:
+
+class CPythonLimitedAPI:
+    @staticmethod
+    def snapshot(
+        fs: FeatureSet,
+        /,
+        *,
+        introspection: Introspection = "stable",  # pyright: ignore[reportUnusedParameter]
+    ) -> Feature:
         st = Status(available=None, enabled=None, active=None)
         ft = Feature(name="py-limited-api", status=st)
 
         if sys.version_info >= (3, 15):
             return ft
-        elif self._free_threading().status.available:
+        elif CPythonFreeThreading.snapshot(
+            fs, introspection=introspection
+        ).status.available:
             st = replace(
                 st,
                 available=False,
@@ -170,7 +206,33 @@ class CPythonFeatureSet:
             st = replace(st, available=True)
             return replace(ft, status=st)
 
-    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class CPythonFeatureSet:
+    """Represents optional CPython features.
+
+    This class can only be instantiated by a CPython interpreter.
+    If a different implementation is detected, will raise a TypeError.
+    """
+
+    def __post_init__(self) -> None:
+        if sys.implementation.name != "cpython":
+            raise TypeError(
+                "CPythonFeatureSet can only be instantiated from a CPython interpreter"
+            )
+
+    _feature_getters: ClassVar[Final[dict[FeatureName, FeatureGetter]]] = {  # type: ignore[valid-type]
+        "free-threading": CPythonFreeThreading,
+        "JIT": CPythonJIT,
+        "py-limited-api": CPythonLimitedAPI,
+    }
+
+    def snapshot(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",
+        introspection: Introspection = "stable",
+    ) -> list[Feature]:
         """
         Create a snapshot of the feature set.
 
@@ -180,6 +242,37 @@ class CPythonFeatureSet:
         Parameters
         ----------
 
+        features: 'all' (default) or list of valid feature names
+          Select features to inspect and report on.
+
+        introspection: 'stable' (default) or 'unstable-inspect-activity'
+          For some features, active and inactive status can only be inspected
+          using APIs that might, as a side effect, alter said status.
+          Use introspection='unstable-inspect-activity' for more accurate
+          reporting if this is acceptable in your application.
+        """
+        getters = self.__class__._feature_getters
+        if features == "all":
+            features = list(getters)
+        return [
+            getters[ft].snapshot(self, introspection=introspection) for ft in features
+        ]
+
+    def diagnostics(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",
+        introspection: Introspection = "stable",
+    ) -> list[str]:
+        """
+        Produce legible diagnostics as a list of strings.
+
+        Parameters
+        ----------
+
+        features: 'all' (default) or list of valid feature names
+          Select features to inspect and report on.
+
         introspection: 'stable' (default) or 'unstable-inspect-activity'
           For some features, active and inactive status can only be inspected
           using APIs that might, as a side effect, alter said status.
@@ -187,48 +280,49 @@ class CPythonFeatureSet:
           reporting if this is acceptable in your application.
         """
         return [
-            self._free_threading(),
-            self._jit(introspection=introspection),
-            self._py_limited_api(),
+            ft.diagnostic
+            for ft in self.snapshot(features=features, introspection=introspection)
         ]
 
-    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:
-        """
-        Produce legible diagnostics as a list of strings.
-
-        Parameters
-        ----------
-
-        introspection: 'stable' (default) or 'unstable-inspect-activity'
-          For some features, active and inactive status can only be inspected
-          using APIs that might, as a side effect, alter said status.
-          Use introspection='unstable-inspect-activity' for more accurate
-          reporting if this is acceptable in your application.
-        """
-        return [ft.diagnostic for ft in self.snapshot(introspection=introspection)]
-
-    def supports(self, feature_name: FeatureName, /) -> bool | None:
+    def supports(
+        self, feature: FeatureName, /, *, introspection: Introspection = "stable"
+    ) -> bool | None:
         """
         Assess availability of a specific feature, by name.
 
-        Only returns True or False if support can be determined exactly,
-        None is returned in uncertain cases.
+        Returns a boolean, unless support cannot be determined exactly,
+        in which case None is returned instead.
         """
-        for ft in self.snapshot():
-            if ft.name != feature_name:
-                continue
-            return ft.status.available
 
-        return False
+        if feature not in (getters := self.__class__._feature_getters):
+            return None
+
+        # this type annotation is redundant, but it helps mypy getting to the finish line
+        ft: Feature = getters[feature].snapshot(self, introspection=introspection)
+        return ft.status.available
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DummyFeatureSet:
-    def snapshot(self, *, introspection: Introspection = "stable") -> list[Feature]:  # pyright: ignore[reportUnusedParameter]
+    def snapshot(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",  # pyright: ignore[reportUnusedParameter]
+        introspection: Introspection = "stable",  # pyright: ignore[reportUnusedParameter]
+    ) -> list[Feature]:
         return []
 
-    def diagnostics(self, *, introspection: Introspection = "stable") -> list[str]:  # pyright: ignore[reportUnusedParameter]
+    def diagnostics(
+        self,
+        *,
+        features: Iterable[FeatureName] | Literal["all"] = "all",  # pyright: ignore[reportUnusedParameter]
+        introspection: Introspection = "stable",  # pyright: ignore[reportUnusedParameter]
+    ) -> list[str]:
         return []
 
-    def supports(self, feature_name: FeatureName, /) -> bool | None:  # pyright: ignore[reportUnusedParameter]
-        return False
+    def supports(
+        self,
+        feature: FeatureName,  # pyright: ignore[reportUnusedParameter]
+        /,
+    ) -> bool | None:
+        return None
