@@ -21,7 +21,7 @@ def test_feature_set_function():
 
 def test_feature_set_supports_invalid():
     fs = runtime_feature_set()
-    assert fs.supports("invalid-feature-name") is False
+    assert fs.supports("invalid-feature-name") is None
 
 
 @cpython_only

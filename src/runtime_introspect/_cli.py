@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from pprint import pprint
 
 from runtime_introspect import CPythonFeatureSet
-from runtime_introspect._features import VALID_INTROSPECTIONS
+from runtime_introspect._features import VALID_FEATURE_NAMES, VALID_INTROSPECTIONS
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,6 +24,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.suggest_on_error = True  # type: ignore
 
     parser.add_argument(
+        "--features",
+        required=False,
+        default="all",
+        nargs="+",
+        choices=VALID_FEATURE_NAMES + ["all"],
+        help="select specific features (default: all)",
+    )
+    parser.add_argument(
         "--introspection",
         required=False,
         default="stable",
@@ -38,11 +46,23 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    match args.features:
+        case ["all"]:
+            features = "all"
+        case _:
+            features = args.features
+
     if args.debug:
-        for ft in fs.snapshot(introspection=args.introspection):
+        for ft in fs.snapshot(
+            features=features,  # type: ignore
+            introspection=args.introspection,
+        ):
             pprint(ft)
     else:
-        for diagnostic in fs.diagnostics(introspection=args.introspection):
+        for diagnostic in fs.diagnostics(
+            features=features,  # type: ignore
+            introspection=args.introspection,
+        ):
             print(diagnostic)
 
     return 0
