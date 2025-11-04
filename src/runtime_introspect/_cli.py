@@ -5,18 +5,22 @@ import sys
 from argparse import ArgumentParser
 from pprint import pprint
 
-from runtime_introspect import CPythonFeatureSet
-from runtime_introspect._features import VALID_FEATURE_NAMES, VALID_INTROSPECTIONS
+from runtime_introspect import runtime_feature_set
+from runtime_introspect._features import (
+    VALID_FEATURE_NAMES,
+    VALID_INTROSPECTIONS,
+    DummyFeatureSet,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
-    match sys.implementation.name:
-        case "cpython":
-            cls = CPythonFeatureSet
-        case _ as unsupported:
-            print(f"Unsupported Python implementation {unsupported!r}", file=sys.stderr)
-            return 1
-    fs = cls()
+    fs = runtime_feature_set()
+    if isinstance(fs, DummyFeatureSet):
+        print(
+            f"Unsupported Python implementation {sys.implementation.name!r}",
+            file=sys.stderr,
+        )
+        return 1
 
     parser = ArgumentParser(allow_abbrev=False)
     # TODO: pass this as kwarg when support for Python 3.13 is dropped
