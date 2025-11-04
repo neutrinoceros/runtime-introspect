@@ -45,7 +45,11 @@ JIT: disabled (envvar PYTHON_JIT is unset)
 py-limited-api: available
 ```
 
-### Query a feature for availability
+Since `runtime-introspect` 0.3.0, `FeatureSet.snapshot` and
+`FeatureSet.diagnostics` will also accept a `features` list to fine-tune exactly
+which features to inspect and report on.
+
+### Inspect specific features
 
 To make code conditional on the availability of a specific feature, use
 `FeatureSet.supports`. For instance
@@ -61,7 +65,7 @@ else:
 As of runtime-introspect 0.2.0, supported feature names include
 `'free-threading'`, `'JIT'` and `'py-limited-api'`.
 
-### As a `pytest` helper
+### Build a `pytest` header
 
 You can use this library to customize `pytest` so that test session headers
 showcase the runtime feature set at startup. For instance
