@@ -136,8 +136,10 @@ class TestCPythonFeatureSet:
         )
 
         env_dict: dict[str, str] = {
-            "COVERAGE_PROCESS_START": os.getenv("COVERAGE_PROCESS_START")
-            or "pyproject.toml"
+            "COVERAGE_PROCESS_START": os.getenv(
+                "COVERAGE_PROCESS_START",
+                default="pyproject.toml",
+            )
         }
         if env.GIL is not None:
             env_dict["PYTHON_GIL"] = env.GIL
