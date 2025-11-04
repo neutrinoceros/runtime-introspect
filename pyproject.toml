@@ -1,6 +1,6 @@
 [project]
 name = "runtime-introspect"
-version = "0.2.1"
+version = "0.3.0"
 description = "A small Python library to seamlessly introspect interpreter features at runtime"
 readme = "README.md"
 authors = [
