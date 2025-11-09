@@ -42,7 +42,7 @@ include = ["tests/"]
 
 [dependency-groups]
 test = [
-    "pytest>=8.4.0",
+    "pytest>=9.0.0",
 ]
 covcheck = [
     {include-group = "test"},
@@ -131,8 +131,10 @@ show_error_context = true
 module = "tests.*"
 ignore_errors = true
 
-[tool.pytest.ini_options]
-addopts = "-ra"
+[tool.pytest]
+minversion = "9.0"
+strict = true
+addopts = ["-ra"]
 filterwarnings = [
     "error",
 ]
