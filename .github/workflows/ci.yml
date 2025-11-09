@@ -60,7 +60,7 @@ jobs:
         prune-cache: false
 
     - if: ${{ matrix.python-version == '3.10' }}
-      run: echo "UV_RESOLUTION=lowest-direct" >> $GITHUB_ENV
+      run: echo "UV_RESOLUTION=lowest" >> $GITHUB_ENV
 
     - name: Run tests (with coverage)
       if: ${{ startswith( matrix.os, 'ubuntu' ) }}
