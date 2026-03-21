@@ -2,7 +2,6 @@
 
 [![PyPI](https://img.shields.io/pypi/v/runtime-introspect.svg?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/runtime-introspect/)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/runtime-introspect)](https://pypi.org/project/runtime-introspect/)
-[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
 A small Python library to introspect interpreter features in a couple of
 portable lines of code. The core functionality is to produce diagnostics for
