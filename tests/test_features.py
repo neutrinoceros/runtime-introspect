@@ -96,11 +96,7 @@ class TestCPythonFeatureSet:
     def test_featureset_snapshot(self, introspection):
         fs = CPythonFeatureSet()
         features = fs.snapshot(introspection=introspection)
-        assert [ft.name for ft in features] == [
-            "free-threading",
-            "JIT",
-            "py-limited-api",
-        ]
+        assert [ft.name for ft in features] == ["free-threading", "JIT"]
 
     @pytest.mark.skipif(
         sys.version_info < (3, 13),
