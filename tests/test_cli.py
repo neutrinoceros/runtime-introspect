@@ -40,7 +40,7 @@ def test_params(features, introspection, debug_flag, capsys):
 
     match features:
         case () | ["all"]:
-            expected_line_count = 3
+            expected_line_count = 2
         case _:
             for ft in features:
                 assert ft in out

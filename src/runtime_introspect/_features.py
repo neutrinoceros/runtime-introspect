@@ -30,12 +30,8 @@ VALID_INTROSPECTIONS: Final[list[Introspection]] = [
     "unstable-inspect-activity",
 ]
 
-FeatureName: TypeAlias = Literal["free-threading", "JIT", "py-limited-api"]
-VALID_FEATURE_NAMES: Final[list[FeatureName]] = [
-    "free-threading",
-    "JIT",
-    "py-limited-api",
-]
+FeatureName: TypeAlias = Literal["free-threading", "JIT"]
+VALID_FEATURE_NAMES: Final[list[FeatureName]] = ["free-threading", "JIT"]
 
 
 class FeatureSet(Protocol):
@@ -180,33 +176,6 @@ class CPythonJIT:
         return replace(ft, status=st)
 
 
-class CPythonLimitedAPI:
-    @staticmethod
-    def snapshot(
-        fs: FeatureSet,
-        /,
-        *,
-        introspection: Introspection = "stable",  # pyright: ignore[reportUnusedParameter]
-    ) -> Feature:
-        st = Status(available=None, enabled=None, active=None)
-        ft = Feature(name="py-limited-api", status=st)
-
-        if sys.version_info >= (3, 15):
-            return ft
-        elif CPythonFreeThreading.snapshot(
-            fs, introspection=introspection
-        ).status.available:
-            st = replace(
-                st,
-                available=False,
-                details="Python 3.14t and earlier free-threaded builds do not support py-limited-api",
-            )
-            return replace(ft, status=st)
-        else:
-            st = replace(st, available=True)
-            return replace(ft, status=st)
-
-
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CPythonFeatureSet:
     """Represents optional CPython features.
@@ -224,7 +193,6 @@ class CPythonFeatureSet:
     _feature_getters: ClassVar[Final[dict[FeatureName, FeatureGetter]]] = {  # type: ignore[valid-type]
         "free-threading": CPythonFreeThreading,
         "JIT": CPythonJIT,
-        "py-limited-api": CPythonLimitedAPI,
     }
 
     def snapshot(
