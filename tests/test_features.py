@@ -36,9 +36,12 @@ def test_feature_immutability():
         ft.name = "new-name"
     with pytest.raises(Exception, match="^cannot assign"):
         ft.status = Status(available=None, enabled=None, active=None)
-    with pytest.raises(TypeError):
+    with pytest.raises(Exception):  # noqa: B017
         # not using an exact match because the error message from slots=True is actually
         # not that helpful, as of CPython 3.13.6
+        # also not specifying the exact exception type:
+        # on 3.14.0 it'll be a TypeError
+        # on 3.14.5 it'll be a dataclasses.FrozenInstanceError
         ft.unknown_attr = 123
 
 
@@ -87,9 +90,12 @@ def settings(request):
 class TestCPythonFeatureSet:
     def test_featureset_immutability(self):
         fs = CPythonFeatureSet()
-        with pytest.raises(TypeError):
+        with pytest.raises(Exception):  # noqa: B017
             # not using an exact match because the error message from slots=True is actually
             # not that helpful, as of CPython 3.13.6
+            # also not specifying the exact exception type:
+            # on 3.14.0 it'll be a TypeError
+            # on 3.14.5 it'll be a dataclasses.FrozenInstanceError
             fs.unknown_attr = 123
 
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
