@@ -1,6 +1,8 @@
 # `runtime_introspect`
 
 [![PyPI](https://img.shields.io/pypi/v/runtime-introspect.svg?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/runtime-introspect/)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/runtime-introspect.svg?logo=condaforge&logoColor=white)](https://anaconda.org/conda-forge/runtime-introspect)
+
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/runtime-introspect)](https://pypi.org/project/runtime-introspect/)
 
 A small Python library to introspect interpreter features in a couple of
