@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import subprocess
@@ -30,18 +31,26 @@ def test_feature_repr():
     )
 
 
+FrozenMutException: type[Exception]
+if sys.version_info >= (3, 14, 5) or (
+    sys.version_info >= (3, 13, 14) and sys.version_info < (3, 14)
+):
+    FrozenMutException = dataclasses.FrozenInstanceError
+else:
+    # https://github.com/python/cpython/issues/105936
+    # https://github.com/python/cpython/pull/144021
+    FrozenMutException = TypeError
+
+
 def test_feature_immutability():
     ft = Feature(name="test", status=Status(available=True, enabled=None, active=None))
     with pytest.raises(Exception, match="^cannot assign"):
         ft.name = "new-name"
     with pytest.raises(Exception, match="^cannot assign"):
         ft.status = Status(available=None, enabled=None, active=None)
-    with pytest.raises(Exception):  # noqa: B017
+    with pytest.raises(FrozenMutException):
         # not using an exact match because the error message from slots=True is actually
         # not that helpful, as of CPython 3.13.6
-        # also not specifying the exact exception type:
-        # on 3.14.0 it'll be a TypeError
-        # on 3.14.5 it'll be a dataclasses.FrozenInstanceError
         ft.unknown_attr = 123
 
 
@@ -90,12 +99,9 @@ def settings(request):
 class TestCPythonFeatureSet:
     def test_featureset_immutability(self):
         fs = CPythonFeatureSet()
-        with pytest.raises(Exception):  # noqa: B017
+        with pytest.raises(FrozenMutException):
             # not using an exact match because the error message from slots=True is actually
             # not that helpful, as of CPython 3.13.6
-            # also not specifying the exact exception type:
-            # on 3.14.0 it'll be a TypeError
-            # on 3.14.5 it'll be a dataclasses.FrozenInstanceError
             fs.unknown_attr = 123
 
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
