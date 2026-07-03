@@ -12,16 +12,19 @@ from .helpers import cpython_only, not_cpython
 @cpython_only
 @pytest.mark.parametrize(
     "features",
-    chain(
-        chain.from_iterable(
-            combinations(VALID_FEATURE_NAMES, n)
-            for n in range(0, len(VALID_FEATURE_NAMES) + 1)
-        ),
-        [("all",)],
+    list(
+        chain(
+            chain.from_iterable(
+                combinations(VALID_FEATURE_NAMES, n)
+                for n in range(0, len(VALID_FEATURE_NAMES) + 1)
+            ),
+            [("all",)],
+        )
     ),
 )
 @pytest.mark.parametrize(
-    "introspection, debug_flag", product([None, *VALID_INTROSPECTIONS], [True, False])
+    "introspection, debug_flag",
+    list(product([None, *VALID_INTROSPECTIONS], [True, False])),
 )
 def test_params(features, introspection, debug_flag, capsys):
     args: list[str] = []
@@ -52,7 +55,8 @@ def test_params(features, introspection, debug_flag, capsys):
 
 @not_cpython
 @pytest.mark.parametrize(
-    "introspection, debug_flag", product([None, *VALID_INTROSPECTIONS], [True, False])
+    "introspection, debug_flag",
+    list(product([None, *VALID_INTROSPECTIONS], [True, False])),
 )
 def test_unsupported_impl(introspection, debug_flag, capsys):
     args: list[str] = []

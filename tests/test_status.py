@@ -50,33 +50,35 @@ def test_logical_consistency(status_quadruple):
 
 @pytest.mark.parametrize(
     "available, enabled, active, expected_msg",
-    chain(
-        [
-            pytest.param(
-                available,
-                enabled,
-                active,
-                (
-                    "Cannot instantiate a Status with "
-                    "available!=True and (enabled!=None or active!=None)"
-                ),
-                id=f"{available}-{enabled}-{active}",
-            )
-            for available in (False, None)
-            for enabled, active in product((True, False, None), (True, False, None))
-            if (enabled, active) != (None, None)
-        ],
-        [
-            pytest.param(
-                True,
-                enabled,
-                active,
-                ("Cannot instantiate a Status with enabled!=True and active!=None"),
-                id=f"True-{enabled}-{active}",
-            )
-            for enabled in (False, None)
-            for active in (True, False)
-        ],
+    list(
+        chain(
+            [
+                pytest.param(
+                    available,
+                    enabled,
+                    active,
+                    (
+                        "Cannot instantiate a Status with "
+                        "available!=True and (enabled!=None or active!=None)"
+                    ),
+                    id=f"{available}-{enabled}-{active}",
+                )
+                for available in (False, None)
+                for enabled, active in product((True, False, None), (True, False, None))
+                if (enabled, active) != (None, None)
+            ],
+            [
+                pytest.param(
+                    True,
+                    enabled,
+                    active,
+                    ("Cannot instantiate a Status with enabled!=True and active!=None"),
+                    id=f"True-{enabled}-{active}",
+                )
+                for enabled in (False, None)
+                for active in (True, False)
+            ],
+        ),
     ),
 )
 def test_invalid_status(available, enabled, active, expected_msg):

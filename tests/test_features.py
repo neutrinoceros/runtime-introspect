@@ -219,9 +219,11 @@ class TestCPythonFeatureSet:
 
     @pytest.mark.parametrize(
         "features",
-        chain.from_iterable(
-            combinations(VALID_FEATURE_NAMES, n)
-            for n in range(1, len(VALID_FEATURE_NAMES) + 1)
+        list(
+            chain.from_iterable(
+                combinations(VALID_FEATURE_NAMES, n)
+                for n in range(1, len(VALID_FEATURE_NAMES) + 1)
+            )
         ),
     )
     @pytest.mark.parametrize("introspection", VALID_INTROSPECTIONS)
