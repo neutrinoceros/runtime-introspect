@@ -34,7 +34,7 @@ Homepage = "https://github.com/neutrinoceros/runtime-introspect"
 Changelog = "https://github.com/neutrinoceros/runtime-introspect/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["flit_core >=3.2,<4"]
+requires = ["flit_core >=3.2,<5"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.sdist]
