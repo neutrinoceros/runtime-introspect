@@ -75,11 +75,15 @@ class CPythonFreeThreading:
             return replace(ft, status=st)
 
         assert sys.version_info >= (3, 13)
-        Py_GIL_DISABLED = cast(
-            Literal[0, 1, None],
-            sysconfig.get_config_var("Py_GIL_DISABLED"),
-        )
-        if Py_GIL_DISABLED == 0:
+        if sys.version_info >= (3, 15):
+            ff = sys.abi_info.free_threaded
+        else:
+            Py_GIL_DISABLED = cast(
+                Literal[0, 1, None],
+                sysconfig.get_config_var("Py_GIL_DISABLED"),
+            )
+            ff = Py_GIL_DISABLED == 1
+        if not ff:
             st = replace(
                 st,
                 available=False,
