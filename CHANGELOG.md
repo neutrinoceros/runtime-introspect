@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TST: catch version specific expected exceptions in dataclasses tests
 - DOC: add conda-forge badge
 - BLD: adjust build time requirement on `flit-core`
+- RFC: on Python 3.15+, use `sys.abi_info` to inspect free-threading availability
 
 ## [0.4.0] - 2026-05-19
 
