@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.4.2] - 2026-08-18
 
 - TST: catch version specific expected exceptions in dataclasses tests
 - DOC: add conda-forge badge
 - BLD: adjust build time requirement on `flit-core`
 - RFC: on Python 3.15+, use `sys.abi_info` to inspect free-threading availability
+
+## [0.4.1] - 2026-05-19
+
+This is a re-release of v0.4.0, which failed to upload due to a regression in the test
+suite against Python 3.14.5 and 3.13.14. The problem was a bug from older versions
+being relied on in runtime-introspect's test suite, and has been fixed.
 
 ## [0.4.0] - 2026-05-19
 
