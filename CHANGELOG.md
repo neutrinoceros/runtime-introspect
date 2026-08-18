@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.4.2] - 2026-08-18
+## [0.4.3] - 2026-08-18
+
+This is a re-release of v0.4.2, which failed to upload due to an incompatibility between the
+build backend (flit-core 4.0.2) and the Github Action used for publication.
+This error was addressed by upgrading the latter.
+
+## [0.4.2] - 2026-08-18 (unreleased)
 
 - TST: catch version specific expected exceptions in dataclasses tests
 - DOC: add conda-forge badge
@@ -19,7 +25,7 @@ This is a re-release of v0.4.0, which failed to upload due to a regression in th
 suite against Python 3.14.5 and 3.13.14. The problem was a bug from older versions
 being relied on in runtime-introspect's test suite, and has been fixed.
 
-## [0.4.0] - 2026-05-19
+## [0.4.0] - 2026-05-19 (unreleased)
 
 - API: drop py-limited-api as a feature id
 
