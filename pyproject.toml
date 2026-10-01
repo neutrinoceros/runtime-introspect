@@ -72,6 +72,13 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["runtime_introspect"]
 
+[tool.coverage.paths]
+source = [
+    "/home/runner/work/runtime-introspect", # Ubuntu
+    "/Users/runner/work/runtime-introspect", # macOS
+    "d:\\a\\runtime-introspect", # Windows
+]
+
 [tool.coverage.run]
 branch = true
 patch = [
