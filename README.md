@@ -57,9 +57,9 @@ from runtime_introspect import runtime_feature_set
 
 fs = runtime_feature_set()
 if fs.supports("free-threading"):
-    ... # cool multi-threading stuff
+    ...  # cool multi-threading stuff
 else:
-    ... # also cool, but single-threaded stuff
+    ...  # also cool, but single-threaded stuff
 ```
 As of runtime-introspect 0.4.0, supported feature names include
 - `'free-threading'`
@@ -75,8 +75,6 @@ showcase the runtime feature set at startup. For instance
 import sys
 import textwrap
 from runtime_introspect import runtime_feature_set
-
-# ...
 
 def pytest_report_header(config, start_path) -> list[str]:
     fs = runtime_feature_set()
