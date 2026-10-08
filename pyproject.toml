@@ -16,7 +16,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -26,7 +25,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 
 [project.urls]
@@ -46,7 +45,6 @@ test = [
 ]
 covcheck = [
     {include-group = "test"},
-    "coverage[toml] ; python_version < '3.11'",
     "coverage>=7.10.0",
 ]
 typecheck = [
@@ -129,7 +127,7 @@ reportIgnoreCommentWithoutRule = false
 enableTypeIgnoreComments = true
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 show_error_codes = true
 show_error_context = true
