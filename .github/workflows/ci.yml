@@ -35,22 +35,22 @@ jobs:
         prelude: ['']
         include:
         - os: ubuntu-latest
-          python-version: '3.14'
+          python-version: '3.15'
           prelude: PYTHON_GIL=1 PYTHON_JIT=0
         - os: ubuntu-latest
-          python-version: '3.14'
+          python-version: '3.15'
           prelude: PYTHON_GIL=1 PYTHON_JIT=1
         - os: ubuntu-latest
-          python-version: 3.14t
+          python-version: 3.15t
           prelude: PYTHON_GIL=1 PYTHON_JIT=0
         - os: ubuntu-latest
           # this setup isn't actually supported yet, but because free-threaded builds
           # don't support JIT-enabling at all, PYTHON_JIT=1 is silently ignored
           # by the interpreter
-          python-version: 3.14t
+          python-version: 3.15t
           prelude: PYTHON_GIL=0 PYTHON_JIT=1
         - os: ubuntu-latest
-          python-version: 3.14t
+          python-version: 3.15t
           prelude: PYTHON_GIL=1 PYTHON_JIT=1
     runs-on: ${{ matrix.os }}
     steps:
@@ -84,7 +84,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       with:
-        python-version: '3.13'
+        python-version: '3.15'
         activate-environment: true
         cache-suffix: covcheck
     - run: uv sync --group covcheck
