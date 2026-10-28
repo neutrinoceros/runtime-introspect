@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - BLD/DEP: fix incorrect lower bound on build time requirement (flit-core)
 - DEP: drop support for CPython 3.10
+- CI: start testing against CPython 3.16 (alpha)
 
 ## [0.4.3] - 2026-08-18
 
